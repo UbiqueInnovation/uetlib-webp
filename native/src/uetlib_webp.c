@@ -497,42 +497,43 @@ uetlib_webp_status uetlib_webp_encode_still_jpeg(
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
 
-    tjhandle decompressor = tj3Init(TJINIT_DECOMPRESS);
+    tjhandle decompressor = tjInitDecompress();
     if (decompressor == NULL) {
         set_error(out_result, UETLIB_WEBP_STATUS_INTERNAL_ERROR, "Failed to allocate TurboJPEG decompressor");
         return UETLIB_WEBP_STATUS_INTERNAL_ERROR;
     }
 
-    if (tj3DecompressHeader(decompressor, jpeg, jpeg_size) != 0) {
-        const char* err = tj3GetErrorStr(decompressor);
+    int width = 0, height = 0, jpeg_subsamp = 0, jpeg_colorspace = 0;
+    if (tjDecompressHeader3(decompressor, jpeg, (unsigned long)jpeg_size,
+                            &width, &height, &jpeg_subsamp, &jpeg_colorspace) != 0) {
+        const char* err = tjGetErrorStr2(decompressor);
         set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
-        tj3Destroy(decompressor);
+        tjDestroy(decompressor);
         return UETLIB_WEBP_STATUS_DECODE_ERROR;
     }
 
-    int width = tj3Get(decompressor, TJPARAM_JPEGWIDTH);
-    int height = tj3Get(decompressor, TJPARAM_JPEGHEIGHT);
     if (width <= 0 || height <= 0) {
         set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, "Invalid JPEG dimensions");
-        tj3Destroy(decompressor);
+        tjDestroy(decompressor);
         return UETLIB_WEBP_STATUS_DECODE_ERROR;
     }
 
     uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
     if (rgb == NULL) {
         set_error(out_result, UETLIB_WEBP_STATUS_OOM, "Out of memory for JPEG decode buffer");
-        tj3Destroy(decompressor);
+        tjDestroy(decompressor);
         return UETLIB_WEBP_STATUS_OOM;
     }
 
-    if (tj3Decompress8(decompressor, jpeg, jpeg_size, rgb, width * 3, TJPF_RGB) != 0) {
-        const char* err = tj3GetErrorStr(decompressor);
+    if (tjDecompress2(decompressor, jpeg, (unsigned long)jpeg_size, rgb,
+                      width, width * 3, height, TJPF_RGB, 0) != 0) {
+        const char* err = tjGetErrorStr2(decompressor);
         set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
         free(rgb);
-        tj3Destroy(decompressor);
+        tjDestroy(decompressor);
         return UETLIB_WEBP_STATUS_DECODE_ERROR;
     }
-    tj3Destroy(decompressor);
+    tjDestroy(decompressor);
 
     uetlib_webp_raw_image raw;
     raw.struct_size = sizeof(uetlib_webp_raw_image);
@@ -743,12 +744,12 @@ static uetlib_webp_status start_compressed_anim(
 static int probe_jpeg(const uint8_t* data, size_t size, int* out_width, int* out_height,
                       void* ctx, const char** error_message) {
     tjhandle jpeg = (tjhandle)ctx;
-    if (tj3DecompressHeader(jpeg, data, size) != 0) {
+    int subsamp = 0, colorspace = 0;
+    if (tjDecompressHeader3(jpeg, data, (unsigned long)size,
+                            out_width, out_height, &subsamp, &colorspace) != 0) {
         *error_message = "Failed to read first JPEG frame";
         return 0;
     }
-    *out_width = tj3Get(jpeg, TJPARAM_JPEGWIDTH);
-    *out_height = tj3Get(jpeg, TJPARAM_JPEGHEIGHT);
     return 1;
 }
 
@@ -776,7 +777,7 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
     }
     init_result(out_result);
 
-    tjhandle jpeg = tj3Init(TJINIT_DECOMPRESS);
+    tjhandle jpeg = tjInitDecompress();
     if (jpeg == NULL) {
         set_error(out_result, UETLIB_WEBP_STATUS_INTERNAL_ERROR, "Failed to allocate TurboJPEG decompressor");
         return UETLIB_WEBP_STATUS_INTERNAL_ERROR;
@@ -790,7 +791,7 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
                                                      out_result, &encoder, &config,
                                                      &canvas_width, &canvas_height);
     if (start != UETLIB_WEBP_STATUS_OK) {
-        tj3Destroy(jpeg);
+        tjDestroy(jpeg);
         return start;
     }
 
@@ -803,24 +804,24 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
             frame->size == 0 ||
             frame->duration_ms <= 0) {
             WebPAnimEncoderDelete(encoder);
-            tj3Destroy(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid JPEG frame in animation job");
             return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
         }
 
-        if (tj3DecompressHeader(jpeg, frame->data, frame->size) != 0) {
+        int width = 0, height = 0, subsamp = 0, colorspace = 0;
+        if (tjDecompressHeader3(jpeg, frame->data, (unsigned long)frame->size,
+                                &width, &height, &subsamp, &colorspace) != 0) {
             WebPAnimEncoderDelete(encoder);
-            const char* err = tj3GetErrorStr(jpeg);
-            tj3Destroy(jpeg);
+            const char* err = tjGetErrorStr2(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
             return UETLIB_WEBP_STATUS_DECODE_ERROR;
         }
 
-        int width = tj3Get(jpeg, TJPARAM_JPEGWIDTH);
-        int height = tj3Get(jpeg, TJPARAM_JPEGHEIGHT);
         if (width != canvas_width || height != canvas_height) {
             WebPAnimEncoderDelete(encoder);
-            tj3Destroy(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "JPEG frame dimensions differ");
             return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
         }
@@ -828,16 +829,17 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
         uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
         if (rgb == NULL) {
             WebPAnimEncoderDelete(encoder);
-            tj3Destroy(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_OOM, "Out of memory for JPEG decode buffer");
             return UETLIB_WEBP_STATUS_OOM;
         }
 
-        if (tj3Decompress8(jpeg, frame->data, frame->size, rgb, width * 3, TJPF_RGB) != 0) {
+        if (tjDecompress2(jpeg, frame->data, (unsigned long)frame->size, rgb,
+                          width, width * 3, height, TJPF_RGB, 0) != 0) {
             free(rgb);
             WebPAnimEncoderDelete(encoder);
-            const char* err = tj3GetErrorStr(jpeg);
-            tj3Destroy(jpeg);
+            const char* err = tjGetErrorStr2(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
             return UETLIB_WEBP_STATUS_DECODE_ERROR;
         }
@@ -857,7 +859,7 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
             free(rgb);
             WebPPictureFree(&picture);
             WebPAnimEncoderDelete(encoder);
-            tj3Destroy(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_ENCODE_ERROR, "Failed to import decoded JPEG frame");
             return UETLIB_WEBP_STATUS_ENCODE_ERROR;
         }
@@ -866,7 +868,7 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
         if (!WebPAnimEncoderAdd(encoder, &picture, timestamp_ms, &config)) {
             WebPPictureFree(&picture);
             WebPAnimEncoderDelete(encoder);
-            tj3Destroy(jpeg);
+            tjDestroy(jpeg);
             set_error(out_result, UETLIB_WEBP_STATUS_ENCODE_ERROR, "WebPAnimEncoderAdd failed for JPEG frame");
             return UETLIB_WEBP_STATUS_ENCODE_ERROR;
         }
@@ -877,7 +879,7 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
 
     uetlib_webp_status final_status = finalize_anim(encoder, timestamp_ms, metadata, out_result,
                                                     "Failed to finalize JPEG animation output");
-    tj3Destroy(jpeg);
+    tjDestroy(jpeg);
     return final_status;
 }
 
