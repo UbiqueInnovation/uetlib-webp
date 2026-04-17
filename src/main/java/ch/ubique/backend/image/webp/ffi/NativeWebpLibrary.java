@@ -84,7 +84,7 @@ public final class NativeWebpLibrary {
 
             RawImage.fill(raw, image);
             EncodeOptions.fill(opts, options);
-            Metadata.fill(meta, metadata);
+            Metadata.fill(meta, metadata, scope);
 
             int status = (int) ENCODE_STILL_RAW.invoke(raw, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
@@ -112,7 +112,7 @@ public final class NativeWebpLibrary {
             MemorySegment meta = scope.allocate(METADATA);
             MemorySegment result = scope.allocate(RESULT);
             EncodeOptions.fill(opts, options);
-            Metadata.fill(meta, metadata);
+            Metadata.fill(meta, metadata, scope);
 
             int status = (int) handle.invoke(compressedBytes, compressedBytes.byteSize(), opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
@@ -179,7 +179,7 @@ public final class NativeWebpLibrary {
             MemorySegment result = scope.allocate(RESULT);
             AnimJob.fill(job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
             EncodeOptions.fill(opts, options);
-            Metadata.fill(meta, metadata);
+            Metadata.fill(meta, metadata, scope);
 
             int status = (int) handle.invoke(job, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
@@ -211,7 +211,7 @@ public final class NativeWebpLibrary {
             MemorySegment result = scope.allocate(RESULT);
             CompressedAnimJob.fill(job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
             EncodeOptions.fill(opts, options);
-            Metadata.fill(meta, metadata);
+            Metadata.fill(meta, metadata, scope);
 
             int status = (int) handle.invoke(job, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
@@ -340,16 +340,34 @@ public final class NativeWebpLibrary {
 
         private Metadata() {}
 
-        static void fill(MemorySegment segment, WebpMetadata metadata) {
-            MemorySegment exif = metadata.exif();
-            MemorySegment iccp = metadata.iccp();
-            MemorySegment xmp = metadata.xmp();
+        static void fill(MemorySegment segment, WebpMetadata metadata, Arena arena) {
+            MemorySegment exif = toNative(metadata.exif(), arena);
+            MemorySegment iccp = toNative(metadata.iccp(), arena);
+            MemorySegment xmp = toNative(metadata.xmp(), arena);
             EXIF.set(segment, 0L, exif);
             EXIF_SIZE.set(segment, 0L, exif.equals(MemorySegment.NULL) ? 0L : exif.byteSize());
             ICCP.set(segment, 0L, iccp);
             ICCP_SIZE.set(segment, 0L, iccp.equals(MemorySegment.NULL) ? 0L : iccp.byteSize());
             XMP.set(segment, 0L, xmp);
             XMP_SIZE.set(segment, 0L, xmp.equals(MemorySegment.NULL) ? 0L : xmp.byteSize());
+        }
+
+        /**
+         * Accepts either an already-native segment (passed through) or a heap-backed segment
+         * from {@link MemorySegment#ofArray(byte[])}; in the latter case the bytes are copied
+         * into {@code arena} and the native-backed copy is returned. This lets {@link WebpMetadata}
+         * expose heap-friendly static factories without forcing callers to manage an Arena.
+         */
+        private static MemorySegment toNative(MemorySegment segment, Arena arena) {
+            if (segment == null || segment.equals(MemorySegment.NULL) || segment.byteSize() == 0L) {
+                return MemorySegment.NULL;
+            }
+            if (segment.isNative()) {
+                return segment;
+            }
+            MemorySegment copy = arena.allocate(segment.byteSize());
+            MemorySegment.copy(segment, 0L, copy, 0L, segment.byteSize());
+            return copy;
         }
     }
 
