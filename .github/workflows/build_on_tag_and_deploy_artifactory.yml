@@ -25,10 +25,6 @@ jobs:
             classifier: macos-aarch64
             install: |
               brew install cmake pkg-config webp jpeg-turbo libpng
-          - os: macos-13
-            classifier: macos-x86_64
-            install: |
-              brew install cmake pkg-config webp jpeg-turbo libpng
 
     steps:
       - name: Checkout

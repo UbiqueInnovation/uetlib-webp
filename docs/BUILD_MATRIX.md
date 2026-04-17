@@ -5,7 +5,7 @@
 | Linux   | x86_64  | `linux-x86_64`  | First-class | Primary production target            |
 | Linux   | aarch64 | `linux-aarch64` | First-class | Built on `ubuntu-24.04-arm` runner   |
 | macOS   | aarch64 | `macos-aarch64` | First-class | Apple Silicon dev + CI               |
-| macOS   | x86_64  | `macos-x86_64`  | Supported   | Built on `macos-13` runner           |
+| macOS   | x86_64  | —               | Unsupported | Intel Macs not shipped               |
 | Windows | any     | —               | Unsupported | `NativeLibraryLoader` rejects it     |
 
 CI builds the native library on every matrix entry and stages it under

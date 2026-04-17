@@ -13,8 +13,8 @@ which owns one malloc-backed native buffer.
   1. `-Duetlib.webp.native.path=/abs/path/to/libuetlib_webp_native.{so,dylib}`
   2. `native/build/libuetlib_webp_native.{so,dylib}` (in-tree CMake build).
   3. Classpath resource `/native/<classifier>/libuetlib_webp_native.{so,dylib}`
-     with `<classifier>` in `{linux-x86_64, linux-aarch64, macos-x86_64,
-     macos-aarch64}` — produced by CI and packaged inside the JAR.
+     with `<classifier>` in `{linux-x86_64, linux-aarch64, macos-aarch64}` —
+     produced by CI and packaged inside the JAR.
   4. `System.loadLibrary("uetlib_webp_native")` via `java.library.path`.
 
 Run Java consumers with native access enabled:

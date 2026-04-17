@@ -51,7 +51,7 @@ The native library is resolved in this order:
 2. `native/build/libuetlib_webp_native.{so,dylib}` — local CMake build, used in-tree.
 3. Classpath resource `/native/<os>-<arch>/libuetlib_webp_native.{so,dylib}` — the packaged
    JAR layout. The supported classifiers are `linux-x86_64`, `linux-aarch64`,
-   `macos-x86_64`, `macos-aarch64`. The resource is streamed into a temp file and loaded.
+   `macos-aarch64`. The resource is streamed into a temp file and loaded.
 4. `java.library.path` (`System.loadLibrary`) — fallback.
 
 CI builds the native library on each `(os, arch)` matrix entry and stages it under
