@@ -27,9 +27,11 @@ and
 ### Per-platform install hints
 
 - Debian/Ubuntu:
-  `apt-get install cmake pkg-config libwebp-dev libturbojpeg0-dev libpng-dev`
+  `apt-get install cmake pkg-config libwebp-dev libturbojpeg0-dev libpng-dev webp`
+  (the `webp` package provides the `webpmux` CLI used by tests)
 - macOS (Homebrew):
   `brew install cmake pkg-config webp jpeg-turbo libpng`
+  (the `webp` formula ships `webpmux`)
 
 ## Native outputs
 
