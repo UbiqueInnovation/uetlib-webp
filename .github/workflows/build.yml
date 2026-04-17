@@ -1,0 +1,72 @@
+name: Build
+on:
+  push:
+    branches: [ '**' ]
+    tags-ignore: [ v* ]
+
+jobs:
+  build:
+    name: Build (${{ matrix.classifier }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            classifier: linux-x86_64
+            install: |
+              sudo apt-get update
+              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libpng-dev
+          - os: ubuntu-24.04-arm
+            classifier: linux-aarch64
+            install: |
+              sudo apt-get update
+              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libpng-dev
+          - os: macos-latest
+            classifier: macos-aarch64
+            install: |
+              brew install cmake pkg-config webp jpeg-turbo libpng
+          - os: macos-13
+            classifier: macos-x86_64
+            install: |
+              brew install cmake pkg-config webp jpeg-turbo libpng
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install native build dependencies
+        run: ${{ matrix.install }}
+
+      - name: Build native library
+        working-directory: native
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j
+
+      - name: Stage native library as classpath resource
+        run: |
+          mkdir -p src/main/resources/native/${{ matrix.classifier }}
+          cp native/build/libuetlib_webp_native.* src/main/resources/native/${{ matrix.classifier }}/
+
+      - name: Prepare maven
+        uses: UbiqueInnovation/action-systems-mvn-prepare@1f1440329f80458fcbf99214a888160840196d17 # v1.1.0
+        with:
+          mvn_repository_id: ubique-artifactory
+          mvn_repository_user: ${{ secrets.UB_ARTIFACTORY_USER }}
+          mvn_repository_password: ${{ secrets.UB_ARTIFACTORY_PASSWORD }}
+          mvn_repository_url: ${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_BACKEND }}
+
+      - name: Maven Install
+        uses: UbiqueInnovation/action-systems-mvn-install@4cb656bce2a93be50d8109150364d38b8954c4c7 # v1.1.3
+        with:
+          parent_pom: pom.xml
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.classifier }}
+          path: src/main/resources/native/${{ matrix.classifier }}/
+          if-no-files-found: error
