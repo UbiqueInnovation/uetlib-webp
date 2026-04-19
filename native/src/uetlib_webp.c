@@ -966,6 +966,254 @@ uetlib_webp_status uetlib_webp_encode_anim_pngs(
                          "Failed to finalize PNG animation output");
 }
 
+/* ---------- Streaming animation encoder --------------------------------------------------- */
+
+struct uetlib_webp_anim_stream {
+    WebPAnimEncoder* encoder;
+    WebPConfig config;
+    int canvas_width;
+    int canvas_height;
+    int timestamp_ms;
+    tjhandle jpeg_decoder; /* lazily created on first add_jpeg */
+};
+
+static void stream_destroy(uetlib_webp_anim_stream* stream) {
+    if (stream == NULL) {
+        return;
+    }
+    if (stream->encoder != NULL) {
+        WebPAnimEncoderDelete(stream->encoder);
+    }
+    if (stream->jpeg_decoder != NULL) {
+        tjDestroy(stream->jpeg_decoder);
+    }
+    free(stream);
+}
+
+/*
+ * The non-finish entry points report errors via out_error->error_message only;
+ * they never produce a data buffer. init_result is used so callers see a clean
+ * struct on the success path too.
+ */
+uetlib_webp_status uetlib_webp_anim_stream_open(
+    int canvas_width, int canvas_height, uint32_t bgcolor_rgba,
+    const uetlib_webp_encode_options* options,
+    uetlib_webp_anim_stream** out_stream,
+    uetlib_webp_result* out_error) {
+
+    if (out_error == NULL || out_stream == NULL) {
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+    init_result(out_error);
+    *out_stream = NULL;
+
+    if (canvas_width <= 0 || canvas_height <= 0 || !valid_options(options)) {
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid stream open arguments");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    uetlib_webp_anim_stream* stream = (uetlib_webp_anim_stream*)calloc(1, sizeof(*stream));
+    if (stream == NULL) {
+        set_error(out_error, UETLIB_WEBP_STATUS_OOM, "Out of memory for stream handle");
+        return UETLIB_WEBP_STATUS_OOM;
+    }
+
+    if (!init_config(options, &stream->config)) {
+        free(stream);
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid encoder config");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    WebPAnimEncoderOptions anim_options;
+    if (!WebPAnimEncoderOptionsInit(&anim_options)) {
+        free(stream);
+        set_error(out_error, UETLIB_WEBP_STATUS_INTERNAL_ERROR, "Failed to init animation options");
+        return UETLIB_WEBP_STATUS_INTERNAL_ERROR;
+    }
+    apply_anim_options(&anim_options, options, bgcolor_rgba);
+
+    stream->encoder = WebPAnimEncoderNew(canvas_width, canvas_height, &anim_options);
+    if (stream->encoder == NULL) {
+        free(stream);
+        set_error(out_error, UETLIB_WEBP_STATUS_INTERNAL_ERROR, "Failed to allocate animation encoder");
+        return UETLIB_WEBP_STATUS_INTERNAL_ERROR;
+    }
+    stream->canvas_width = canvas_width;
+    stream->canvas_height = canvas_height;
+    stream->timestamp_ms = 0;
+    stream->jpeg_decoder = NULL;
+
+    *out_stream = stream;
+    return UETLIB_WEBP_STATUS_OK;
+}
+
+/*
+ * Decode one JPEG via TurboJPEG into a transient RGB buffer, hand it to the encoder,
+ * release the buffer immediately. Caller's jpeg bytes are read once and not retained.
+ */
+uetlib_webp_status uetlib_webp_anim_stream_add_jpeg(
+    uetlib_webp_anim_stream* stream,
+    const uint8_t* jpeg, size_t jpeg_size,
+    int duration_ms,
+    uetlib_webp_result* out_error) {
+
+    if (out_error == NULL) {
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+    init_result(out_error);
+
+    if (stream == NULL || jpeg == NULL || jpeg_size == 0 || duration_ms <= 0) {
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid add_jpeg arguments");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    if (stream->jpeg_decoder == NULL) {
+        stream->jpeg_decoder = tjInitDecompress();
+        if (stream->jpeg_decoder == NULL) {
+            set_error(out_error, UETLIB_WEBP_STATUS_INTERNAL_ERROR, "Failed to allocate TurboJPEG decompressor");
+            return UETLIB_WEBP_STATUS_INTERNAL_ERROR;
+        }
+    }
+
+    int width = 0, height = 0, subsamp = 0, colorspace = 0;
+    if (tjDecompressHeader3(stream->jpeg_decoder, jpeg, (unsigned long)jpeg_size,
+                            &width, &height, &subsamp, &colorspace) != 0) {
+        set_error(out_error, UETLIB_WEBP_STATUS_DECODE_ERROR, tjGetErrorStr2(stream->jpeg_decoder));
+        return UETLIB_WEBP_STATUS_DECODE_ERROR;
+    }
+    if (width != stream->canvas_width || height != stream->canvas_height) {
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "JPEG frame dimensions differ from canvas");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
+    if (rgb == NULL) {
+        set_error(out_error, UETLIB_WEBP_STATUS_OOM, "Out of memory for JPEG decode buffer");
+        return UETLIB_WEBP_STATUS_OOM;
+    }
+    if (tjDecompress2(stream->jpeg_decoder, jpeg, (unsigned long)jpeg_size, rgb,
+                      width, width * 3, height, TJPF_RGB, 0) != 0) {
+        const char* err = tjGetErrorStr2(stream->jpeg_decoder);
+        free(rgb);
+        set_error(out_error, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
+        return UETLIB_WEBP_STATUS_DECODE_ERROR;
+    }
+
+    uetlib_webp_raw_image raw;
+    raw.struct_size = sizeof(uetlib_webp_raw_image);
+    raw.abi_version = UETLIB_WEBP_ABI_VERSION;
+    raw.pixels = rgb;
+    raw.width = width;
+    raw.height = height;
+    raw.stride = width * 3;
+    raw.pixel_format = UETLIB_WEBP_PIXEL_RGB;
+
+    WebPPicture picture;
+    WebPPictureInit(&picture);
+    if (!import_picture(&raw, &picture)) {
+        free(rgb);
+        WebPPictureFree(&picture);
+        set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "Failed to import decoded JPEG frame");
+        return UETLIB_WEBP_STATUS_ENCODE_ERROR;
+    }
+    free(rgb);
+
+    if (!WebPAnimEncoderAdd(stream->encoder, &picture, stream->timestamp_ms, &stream->config)) {
+        WebPPictureFree(&picture);
+        set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "WebPAnimEncoderAdd failed for JPEG frame");
+        return UETLIB_WEBP_STATUS_ENCODE_ERROR;
+    }
+    WebPPictureFree(&picture);
+    stream->timestamp_ms += duration_ms;
+    return UETLIB_WEBP_STATUS_OK;
+}
+
+uetlib_webp_status uetlib_webp_anim_stream_add_png(
+    uetlib_webp_anim_stream* stream,
+    const uint8_t* png, size_t png_size,
+    int duration_ms,
+    uetlib_webp_result* out_error) {
+
+    if (out_error == NULL) {
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+    init_result(out_error);
+
+    if (stream == NULL || png == NULL || png_size == 0 || duration_ms <= 0) {
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid add_png arguments");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    decoded_image decoded;
+    if (!decode_png_rgba(png, png_size, &decoded)) {
+        set_error(out_error, UETLIB_WEBP_STATUS_DECODE_ERROR, "Failed to decode PNG frame");
+        return UETLIB_WEBP_STATUS_DECODE_ERROR;
+    }
+    if (decoded.width != stream->canvas_width || decoded.height != stream->canvas_height) {
+        free(decoded.pixels);
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "PNG frame dimensions differ from canvas");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    uetlib_webp_raw_image raw;
+    raw.struct_size = sizeof(uetlib_webp_raw_image);
+    raw.abi_version = UETLIB_WEBP_ABI_VERSION;
+    raw.pixels = decoded.pixels;
+    raw.width = decoded.width;
+    raw.height = decoded.height;
+    raw.stride = decoded.stride;
+    raw.pixel_format = decoded.pixel_format;
+
+    WebPPicture picture;
+    WebPPictureInit(&picture);
+    if (!import_picture(&raw, &picture)) {
+        free(decoded.pixels);
+        WebPPictureFree(&picture);
+        set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "Failed to import decoded PNG frame");
+        return UETLIB_WEBP_STATUS_ENCODE_ERROR;
+    }
+    free(decoded.pixels);
+
+    if (!WebPAnimEncoderAdd(stream->encoder, &picture, stream->timestamp_ms, &stream->config)) {
+        WebPPictureFree(&picture);
+        set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "WebPAnimEncoderAdd failed for PNG frame");
+        return UETLIB_WEBP_STATUS_ENCODE_ERROR;
+    }
+    WebPPictureFree(&picture);
+    stream->timestamp_ms += duration_ms;
+    return UETLIB_WEBP_STATUS_OK;
+}
+
+uetlib_webp_status uetlib_webp_anim_stream_finish(
+    uetlib_webp_anim_stream* stream,
+    const uetlib_webp_metadata* metadata,
+    uetlib_webp_result* out_result) {
+
+    if (out_result == NULL) {
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+    init_result(out_result);
+
+    if (stream == NULL) {
+        set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Stream handle is NULL");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    /* finalize_anim takes ownership of `encoder` and deletes it. We must NOT also
+     * delete it in stream_destroy below — null it out first. */
+    WebPAnimEncoder* encoder = stream->encoder;
+    stream->encoder = NULL;
+
+    uetlib_webp_status status = finalize_anim(encoder, stream->timestamp_ms, metadata, out_result,
+                                              "Failed to finalize streamed animation output");
+    stream_destroy(stream);
+    return status;
+}
+
+void uetlib_webp_anim_stream_abort(uetlib_webp_anim_stream* stream) {
+    stream_destroy(stream);
+}
+
 void uetlib_webp_free_result(uetlib_webp_result* result) {
     if (result == NULL) {
         return;

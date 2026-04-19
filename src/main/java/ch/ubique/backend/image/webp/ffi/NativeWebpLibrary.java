@@ -51,6 +51,11 @@ public final class NativeWebpLibrary {
     private static final MethodHandle ENCODE_ANIM_JPEGS;
     private static final MethodHandle ENCODE_ANIM_PNGS;
     private static final MethodHandle FREE_BUFFER;
+    private static final MethodHandle STREAM_OPEN;
+    private static final MethodHandle STREAM_ADD_JPEG;
+    private static final MethodHandle STREAM_ADD_PNG;
+    private static final MethodHandle STREAM_FINISH;
+    private static final MethodHandle STREAM_ABORT;
 
     static {
         NativeLibraryLoader.ensureLoaded();
@@ -68,6 +73,16 @@ public final class NativeWebpLibrary {
         ENCODE_ANIM_PNGS = downcall("uetlib_webp_encode_anim_pngs",
             FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
         FREE_BUFFER = downcall("uetlib_webp_free_buffer",
+            FunctionDescriptor.ofVoid(C_POINTER));
+        STREAM_OPEN = downcall("uetlib_webp_anim_stream_open",
+            FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT, C_POINTER, C_POINTER, C_POINTER));
+        STREAM_ADD_JPEG = downcall("uetlib_webp_anim_stream_add_jpeg",
+            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
+        STREAM_ADD_PNG = downcall("uetlib_webp_anim_stream_add_png",
+            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
+        STREAM_FINISH = downcall("uetlib_webp_anim_stream_finish",
+            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
+        STREAM_ABORT = downcall("uetlib_webp_anim_stream_abort",
             FunctionDescriptor.ofVoid(C_POINTER));
     }
 
@@ -218,6 +233,121 @@ public final class NativeWebpLibrary {
         } catch (Throwable t) {
             throw wrapNativeFailure(t);
         }
+    }
+
+    /* ---------- Streaming animation encoder ---------------------------------------------- */
+
+    /**
+     * Opens a native streaming animation encoder. Returns the opaque handle address as a
+     * {@code long}; the caller (typically {@code WebpAnimationStream}) is responsible for
+     * eventually calling {@link #streamFinish} or {@link #streamAbort} on it.
+     */
+    public static long streamOpen(int canvasWidth, int canvasHeight, int bgcolorRgba,
+                                  WebpEncodeOptions options) {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment opts = arena.allocate(ENCODE_OPTIONS);
+            MemorySegment outStream = arena.allocate(C_POINTER);
+            MemorySegment outErr = arena.allocate(RESULT);
+            EncodeOptions.fill(opts, options);
+
+            int status = (int) STREAM_OPEN.invoke(canvasWidth, canvasHeight, bgcolorRgba,
+                opts, outStream, outErr);
+            if (status != 0) {
+                String err = readErrorMessage(outErr);
+                freeBuffer(Result.errorMessage(outErr).address());
+                throw new WebpException("Failed to open WebP animation stream (status=" + status + "): " + err, status);
+            }
+            // success path may also have set error_message to NULL — defensively free
+            freeBuffer(Result.errorMessage(outErr).address());
+
+            MemorySegment handle = outStream.get(C_POINTER, 0L);
+            if (handle.equals(MemorySegment.NULL) || handle.address() == 0L) {
+                throw new WebpException("Native stream open returned NULL handle");
+            }
+            return handle.address();
+        } catch (WebpException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw wrapNativeFailure(t);
+        }
+    }
+
+    public static void streamAddJpeg(long handleAddress, MemorySegment jpegBytes, int durationMs) {
+        streamAddCompressed(STREAM_ADD_JPEG, handleAddress, jpegBytes, durationMs, "JPEG");
+    }
+
+    public static void streamAddPng(long handleAddress, MemorySegment pngBytes, int durationMs) {
+        streamAddCompressed(STREAM_ADD_PNG, handleAddress, pngBytes, durationMs, "PNG");
+    }
+
+    private static void streamAddCompressed(MethodHandle handle, long handleAddress,
+                                            MemorySegment compressedBytes, int durationMs,
+                                            String label) {
+        if (handleAddress == 0L) {
+            throw new WebpException("stream handle is closed");
+        }
+        if (compressedBytes == null || compressedBytes.equals(MemorySegment.NULL) || compressedBytes.byteSize() <= 0) {
+            throw new WebpException(label + " bytes must be non-null and non-empty");
+        }
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment outErr = arena.allocate(RESULT);
+            MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
+            int status = (int) handle.invoke(streamPtr, compressedBytes, compressedBytes.byteSize(),
+                durationMs, outErr);
+            if (status != 0) {
+                String err = readErrorMessage(outErr);
+                freeBuffer(Result.errorMessage(outErr).address());
+                throw new WebpException("stream_add_" + label.toLowerCase() + " failed (status="
+                    + status + "): " + err, status);
+            }
+            freeBuffer(Result.errorMessage(outErr).address());
+        } catch (WebpException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw wrapNativeFailure(t);
+        }
+    }
+
+    /**
+     * Finalises a native streaming encoder, returns the assembled WebP buffer as an
+     * {@link EncodedWebp}. The native handle is destroyed regardless of success/failure.
+     */
+    public static EncodedWebp streamFinish(long handleAddress, WebpMetadata metadata) {
+        if (handleAddress == 0L) {
+            throw new WebpException("stream handle is closed");
+        }
+        try {
+            Arena scope = Arena.ofShared();
+            MemorySegment meta = scope.allocate(METADATA);
+            MemorySegment result = scope.allocate(RESULT);
+            Metadata.fill(meta, metadata == null ? WebpMetadata.EMPTY : metadata, scope);
+
+            MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
+            int status = (int) STREAM_FINISH.invoke(streamPtr, meta, result);
+            return toEncodedOrThrow(status, result, scope);
+        } catch (Throwable t) {
+            throw wrapNativeFailure(t);
+        }
+    }
+
+    /** Best-effort destruction; never throws. */
+    public static void streamAbort(long handleAddress) {
+        if (handleAddress == 0L) {
+            return;
+        }
+        try {
+            STREAM_ABORT.invoke(MemorySegment.ofAddress(handleAddress));
+        } catch (Throwable ignored) {
+            // intentionally swallowed: abort is a cleanup helper.
+        }
+    }
+
+    private static String readErrorMessage(MemorySegment errResult) {
+        MemorySegment errPtr = Result.errorMessage(errResult);
+        if (errPtr.equals(MemorySegment.NULL) || errPtr.address() == 0L) {
+            return "Unknown error";
+        }
+        return errPtr.getString(0);
     }
 
     public static void freeBuffer(long address) {

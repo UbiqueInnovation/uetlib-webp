@@ -31,18 +31,7 @@ class NativeIntegrationTest {
 
     @BeforeAll
     static void configureNativePath() {
-        String explicit = System.getProperty("uetlib.webp.native.path");
-        if (explicit != null && !explicit.isBlank()) {
-            assumeTrue(Files.exists(Path.of(explicit)), "Native library path is missing: " + explicit);
-            return;
-        }
-
-        String libName = System.getProperty("os.name", "").toLowerCase().contains("mac")
-            ? "libuetlib_webp_native.dylib"
-            : "libuetlib_webp_native.so";
-        Path defaultPath = Path.of("native", "build", libName).toAbsolutePath();
-        assumeTrue(Files.exists(defaultPath), "Build native library first at " + defaultPath);
-        System.setProperty("uetlib.webp.native.path", defaultPath.toString());
+        NativeTestSupport.configureNativePath();
     }
 
     @ParameterizedTest

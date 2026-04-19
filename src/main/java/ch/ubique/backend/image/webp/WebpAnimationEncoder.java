@@ -195,6 +195,26 @@ public final class WebpAnimationEncoder {
         }
     }
 
+    /* ---------- Streaming entry points ------------------------------------------------------- */
+
+    /**
+     * Open a streaming JPEG-frame encoder. Use this when you have many frames and don't want
+     * to hold them all in memory at once — push one at a time, then call
+     * {@link WebpAnimationStream#finish}.
+     *
+     * @see WebpAnimationStream
+     */
+    public WebpAnimationStream openJpegStream(
+        int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
+        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options, /*jpeg=*/ true);
+    }
+
+    /** Streaming PNG-frame variant of {@link #openJpegStream}. */
+    public WebpAnimationStream openPngStream(
+        int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
+        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options, /*jpeg=*/ false);
+    }
+
     private static void requireFrames(List<?> frames) {
         if (frames == null || frames.isEmpty()) {
             throw new IllegalArgumentException("frames must be non-empty");
