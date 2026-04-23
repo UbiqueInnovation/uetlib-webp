@@ -342,8 +342,19 @@ static void apply_anim_options(WebPAnimEncoderOptions* anim_options,
                                uint32_t bgcolor_rgba) {
     anim_options->anim_params.loop_count = options->loop_count;
     anim_options->anim_params.bgcolor = bgcolor_rgba;
-    anim_options->kmin = options->kmin;
-    anim_options->kmax = options->kmax;
+    /*
+     * Only override libwebp's keyframe-distance defaults (kmin=9, kmax=17 from
+     * WebPAnimEncoderOptionsInit) when the caller explicitly set a non-zero value.
+     * kmin == kmax == 0 forces a keyframe at every frame, which roughly doubles
+     * the output size for slow-changing content like webcam timelapses — matching
+     * img2webp's defaults requires letting libwebp keep its built-ins.
+     */
+    if (options->kmin > 0) {
+        anim_options->kmin = options->kmin;
+    }
+    if (options->kmax > 0) {
+        anim_options->kmax = options->kmax;
+    }
     anim_options->allow_mixed = options->allow_mixed;
     anim_options->minimize_size = options->minimize_size;
 }

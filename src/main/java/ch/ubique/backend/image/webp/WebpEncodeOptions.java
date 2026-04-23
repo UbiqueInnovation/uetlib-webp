@@ -13,7 +13,9 @@ public final class WebpEncodeOptions {
     private final int threadLevel;
     private final int alphaQuality;
     private final int loopCount;
+    /** {@code 0} means "let libwebp pick" (matches img2webp / WebPAnimEncoderOptionsInit: kmin=9). */
     private final int kmin;
+    /** {@code 0} means "let libwebp pick" (matches img2webp / WebPAnimEncoderOptionsInit: kmax=17). */
     private final int kmax;
     private final boolean allowMixed;
     private final boolean minimizeSize;
