@@ -347,7 +347,9 @@ public final class NativeWebpLibrary {
         if (errPtr.equals(MemorySegment.NULL) || errPtr.address() == 0L) {
             return "Unknown error";
         }
-        return errPtr.getString(0);
+        // C_POINTER VarHandle returns an unbound segment (byteSize=0); reinterpret so
+        // getString() can scan for the null terminator.
+        return errPtr.reinterpret(Long.MAX_VALUE).getString(0);
     }
 
     public static void freeBuffer(long address) {
@@ -381,7 +383,7 @@ public final class NativeWebpLibrary {
             long size = Result.size(result);
 
             if (status != 0 || resultStatus != 0) {
-                String err = errPtr.equals(MemorySegment.NULL) ? "Unknown error" : errPtr.getString(0);
+                String err = errPtr.equals(MemorySegment.NULL) ? "Unknown error" : errPtr.reinterpret(Long.MAX_VALUE).getString(0);
                 freeBuffer(data.address());
                 freeBuffer(errPtr.address());
                 throw new WebpException("WebP encode failed (status=" + resultStatus + "): " + err, resultStatus);
