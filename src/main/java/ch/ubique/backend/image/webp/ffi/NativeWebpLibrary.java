@@ -54,6 +54,7 @@ public final class NativeWebpLibrary {
     private static final MethodHandle STREAM_OPEN;
     private static final MethodHandle STREAM_ADD_JPEG;
     private static final MethodHandle STREAM_ADD_PNG;
+    private static final MethodHandle STREAM_ADD_WEBP;
     private static final MethodHandle STREAM_FINISH;
     private static final MethodHandle STREAM_ABORT;
 
@@ -79,6 +80,8 @@ public final class NativeWebpLibrary {
         STREAM_ADD_JPEG = downcall("uetlib_webp_anim_stream_add_jpeg",
             FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
         STREAM_ADD_PNG = downcall("uetlib_webp_anim_stream_add_png",
+            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
+        STREAM_ADD_WEBP = downcall("uetlib_webp_anim_stream_add_webp",
             FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
         STREAM_FINISH = downcall("uetlib_webp_anim_stream_finish",
             FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
@@ -278,6 +281,10 @@ public final class NativeWebpLibrary {
 
     public static void streamAddPng(long handleAddress, MemorySegment pngBytes, int durationMs) {
         streamAddCompressed(STREAM_ADD_PNG, handleAddress, pngBytes, durationMs, "PNG");
+    }
+
+    public static void streamAddWebp(long handleAddress, MemorySegment webpBytes, int durationMs) {
+        streamAddCompressed(STREAM_ADD_WEBP, handleAddress, webpBytes, durationMs, "WebP");
     }
 
     private static void streamAddCompressed(MethodHandle handle, long handleAddress,

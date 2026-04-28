@@ -206,13 +206,28 @@ public final class WebpAnimationEncoder {
      */
     public WebpAnimationStream openJpegStream(
         int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
-        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options, /*jpeg=*/ true);
+        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options,
+            WebpAnimationStream.FrameFormat.JPEG);
     }
 
     /** Streaming PNG-frame variant of {@link #openJpegStream}. */
     public WebpAnimationStream openPngStream(
         int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
-        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options, /*jpeg=*/ false);
+        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options,
+            WebpAnimationStream.FrameFormat.PNG);
+    }
+
+    /**
+     * Open a streaming WebP-frame encoder. Use this when frames are already stored as still
+     * WebP images — the native layer decodes each frame to raw pixels and re-encodes into the
+     * animated container. No intermediate JPEG/PNG round-trip occurs.
+     *
+     * @see WebpAnimationStream
+     */
+    public WebpAnimationStream openWebpStream(
+        int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
+        return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options,
+            WebpAnimationStream.FrameFormat.WEBP);
     }
 
     private static void requireFrames(List<?> frames) {

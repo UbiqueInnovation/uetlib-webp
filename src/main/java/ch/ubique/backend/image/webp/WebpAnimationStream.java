@@ -34,38 +34,47 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class WebpAnimationStream implements AutoCloseable {
     private static final Cleaner CLEANER = Cleaner.create();
 
+    enum FrameFormat { JPEG, PNG, WEBP }
+
     private final State state;
     private final Cleaner.Cleanable cleanable;
-    private final boolean jpeg;
+    private final FrameFormat format;
 
-    /** Use {@link WebpAnimationEncoder#openJpegStream} / {@code openPngStream} to construct. */
+    /** Use {@link WebpAnimationEncoder#openJpegStream} / {@code openPngStream} / {@code openWebpStream} to construct. */
     WebpAnimationStream(int canvasWidth, int canvasHeight, int bgcolorRgba,
-                        WebpEncodeOptions options, boolean jpeg) {
+                        WebpEncodeOptions options, FrameFormat format) {
         long handle = NativeWebpLibrary.streamOpen(canvasWidth, canvasHeight, bgcolorRgba, options);
         this.state = new State(handle);
         this.cleanable = CLEANER.register(this, state);
-        this.jpeg = jpeg;
+        this.format = format;
     }
 
     /**
-     * Decode a JPEG frame and append it to the animation. Throws if this stream was opened
-     * for PNG, if the frame is empty, or if its dimensions don't match the canvas.
+     * Decode a JPEG frame and append it to the animation. Throws if this stream was not opened
+     * for JPEG, if the frame is empty, or if its dimensions don't match the canvas.
      */
     public void addJpeg(byte[] jpegBytes, int durationMs) {
-        if (!jpeg) {
-            throw new WebpException("addJpeg called on PNG stream");
+        if (format != FrameFormat.JPEG) {
+            throw new WebpException("addJpeg called on " + format + " stream");
         }
-        addCompressed(jpegBytes, durationMs, /*isJpeg=*/ true);
+        addCompressed(jpegBytes, durationMs, FrameFormat.JPEG);
     }
 
     public void addPng(byte[] pngBytes, int durationMs) {
-        if (jpeg) {
-            throw new WebpException("addPng called on JPEG stream");
+        if (format != FrameFormat.PNG) {
+            throw new WebpException("addPng called on " + format + " stream");
         }
-        addCompressed(pngBytes, durationMs, /*isJpeg=*/ false);
+        addCompressed(pngBytes, durationMs, FrameFormat.PNG);
     }
 
-    private void addCompressed(byte[] data, int durationMs, boolean isJpeg) {
+    public void addWebp(byte[] webpBytes, int durationMs) {
+        if (format != FrameFormat.WEBP) {
+            throw new WebpException("addWebp called on " + format + " stream");
+        }
+        addCompressed(webpBytes, durationMs, FrameFormat.WEBP);
+    }
+
+    private void addCompressed(byte[] data, int durationMs, FrameFormat fmt) {
         long h = state.handle.get();
         if (h == 0L) {
             throw new IllegalStateException("WebpAnimationStream is closed");
@@ -79,10 +88,10 @@ public final class WebpAnimationStream implements AutoCloseable {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment seg = arena.allocate(data.length);
             MemorySegment.copy(MemorySegment.ofArray(data), 0L, seg, 0L, data.length);
-            if (isJpeg) {
-                NativeWebpLibrary.streamAddJpeg(h, seg, durationMs);
-            } else {
-                NativeWebpLibrary.streamAddPng(h, seg, durationMs);
+            switch (fmt) {
+                case JPEG -> NativeWebpLibrary.streamAddJpeg(h, seg, durationMs);
+                case PNG  -> NativeWebpLibrary.streamAddPng(h, seg, durationMs);
+                case WEBP -> NativeWebpLibrary.streamAddWebp(h, seg, durationMs);
             }
         }
     }

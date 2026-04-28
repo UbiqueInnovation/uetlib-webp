@@ -5,6 +5,7 @@
 
 #include <png.h>
 #include <turbojpeg.h>
+#include <webp/decode.h>
 #include <webp/encode.h>
 #include <webp/mux.h>
 #include <webp/mux_types.h>
@@ -1188,6 +1189,63 @@ uetlib_webp_status uetlib_webp_anim_stream_add_png(
     if (!WebPAnimEncoderAdd(stream->encoder, &picture, stream->timestamp_ms, &stream->config)) {
         WebPPictureFree(&picture);
         set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "WebPAnimEncoderAdd failed for PNG frame");
+        return UETLIB_WEBP_STATUS_ENCODE_ERROR;
+    }
+    WebPPictureFree(&picture);
+    stream->timestamp_ms += duration_ms;
+    return UETLIB_WEBP_STATUS_OK;
+}
+
+uetlib_webp_status uetlib_webp_anim_stream_add_webp(
+    uetlib_webp_anim_stream* stream,
+    const uint8_t* webp, size_t webp_size,
+    int duration_ms,
+    uetlib_webp_result* out_error) {
+
+    if (out_error == NULL) {
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+    init_result(out_error);
+
+    if (stream == NULL || webp == NULL || webp_size == 0 || duration_ms <= 0) {
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid add_webp arguments");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    int width = 0, height = 0;
+    uint8_t* rgb = WebPDecodeRGB(webp, webp_size, &width, &height);
+    if (rgb == NULL) {
+        set_error(out_error, UETLIB_WEBP_STATUS_DECODE_ERROR, "Failed to decode WebP frame");
+        return UETLIB_WEBP_STATUS_DECODE_ERROR;
+    }
+    if (width != stream->canvas_width || height != stream->canvas_height) {
+        WebPFree(rgb);
+        set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "WebP frame dimensions differ from canvas");
+        return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
+    }
+
+    uetlib_webp_raw_image raw;
+    raw.struct_size = sizeof(uetlib_webp_raw_image);
+    raw.abi_version = UETLIB_WEBP_ABI_VERSION;
+    raw.pixels = rgb;
+    raw.width = width;
+    raw.height = height;
+    raw.stride = width * 3;
+    raw.pixel_format = UETLIB_WEBP_PIXEL_RGB;
+
+    WebPPicture picture;
+    WebPPictureInit(&picture);
+    if (!import_picture(&raw, &picture)) {
+        WebPFree(rgb);
+        WebPPictureFree(&picture);
+        set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "Failed to import decoded WebP frame");
+        return UETLIB_WEBP_STATUS_ENCODE_ERROR;
+    }
+    WebPFree(rgb);
+
+    if (!WebPAnimEncoderAdd(stream->encoder, &picture, stream->timestamp_ms, &stream->config)) {
+        WebPPictureFree(&picture);
+        set_error(out_error, UETLIB_WEBP_STATUS_ENCODE_ERROR, "WebPAnimEncoderAdd failed for WebP frame");
         return UETLIB_WEBP_STATUS_ENCODE_ERROR;
     }
     WebPPictureFree(&picture);

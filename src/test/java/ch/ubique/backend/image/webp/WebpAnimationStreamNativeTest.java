@@ -204,6 +204,52 @@ class WebpAnimationStreamNativeTest {
     }
 
     @Test
+    void streamWebpFramesProducesAnimatedWebp() throws Exception {
+        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        int[] dim = readDimensions(jpeg);
+        // Produce a still WebP from the JPEG to use as the frame source.
+        WebpEncoder stillEncoder = new WebpEncoder();
+        byte[] stillWebp;
+        try (EncodedWebp encoded = stillEncoder.encodeStillJpeg(jpeg, WebpEncodeOptions.defaults(), WebpMetadata.EMPTY)) {
+            stillWebp = encoded.toByteArray();
+        }
+        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        byte[] webp;
+        try (WebpAnimationStream stream =
+                 encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+            stream.addWebp(stillWebp, 50);
+            stream.addWebp(stillWebp, 50);
+            webp = stream.finish(WebpMetadata.EMPTY);
+        }
+        assertWebpContainer(webp);
+    }
+
+    @Test
+    void webpStreamRejectsJpegAndPngFrames() throws Exception {
+        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        int[] dim = readDimensions(jpeg);
+        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (WebpAnimationStream stream =
+                 encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+            assertThrows(WebpException.class, () -> stream.addJpeg(jpeg, 50));
+            assertThrows(WebpException.class, () -> stream.addPng(jpeg, 50));
+        }
+    }
+
+    @Test
+    void streamWebpRejectsCorruptFrame() throws Exception {
+        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        int[] dim = readDimensions(jpeg);
+        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        byte[] garbage = new byte[256];
+        java.util.Arrays.fill(garbage, (byte) 0xAB);
+        try (WebpAnimationStream stream =
+                 encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+            assertThrows(WebpException.class, () -> stream.addWebp(garbage, 50));
+        }
+    }
+
+    @Test
     void streamRejectsInvalidArguments() {
         WebpAnimationEncoder encoder = new WebpAnimationEncoder();
         assertThrows(WebpException.class,
