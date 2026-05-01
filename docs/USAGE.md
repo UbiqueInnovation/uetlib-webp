@@ -205,25 +205,40 @@ try {
 `nativeStatus()` returns `OptionalInt.empty()` for exceptions raised purely on
 the Java side (e.g. invalid arguments before reaching native code).
 
-## 11. Migrating from the `uetlib-core` compatibility shim
+## 11. Migrating from `uetlib-core`
 
-The following types are kept only for source-compat and are marked
-`@Deprecated(forRemoval = true)`:
+The legacy `uetlib-core` WebP API shells out to `cwebp` / `img2webp` /
+`webpmux` and exposes types like `WebpWriter`, `WebpUtils`, `WebpEncodingConfig`,
+`Frame`, `LossyWebp`, `LosslessWebp`, `CompressionMethod`, and `PartialImage`.
+This library replaces all of that with in-process libwebp via FFM. Map the old
+call sites onto the new API as follows:
 
-`WebpWriter`, `WebpUtils`, `WebpEncodingConfig`, `Frame`, `PartialImage`,
-`CompressionMethod`, `LosslessWebp`, `LossyWebp`, `WebpQuality`,
-`CompatibilityWebpEncoder`.
+| `uetlib-core`                                                     | `uetlib-webp`                                                                              |
+|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| `WebpUtils.fromBufferedImage(image)`                              | `new WebpEncoder().encodeStillRaw(WebpRawImage…, options, WebpMetadata.EMPTY)`             |
+| `WebpUtils.animationFromBufferedImages(images, config)`           | `new WebpAnimationEncoder().encodeRawFrames(List<WebpFrame>, w, h, 0, options, metadata)`  |
+| `WebpUtils.animationFromExistingPngs(paths, config)`              | `new WebpAnimationEncoder().encodePngFrames(List<WebpCompressedFrame>, …)`                 |
+| `WebpUtils.animationFromImagesAsByteArrays(jpegOrPngBytes, cfg)`  | `WebpAnimationEncoder.encodeJpegFrames(...)` / `encodePngFrames(...)` (pick by content)    |
+| `WebpUtils.addMetadata(webp, xmp)`                                | Pass `WebpMetadata` at encode time — post-hoc metadata injection is no longer supported    |
+| `new WebpWriter(config).encode(framePaths)` → `Path`              | Encode in memory with `WebpAnimationEncoder`; write the returned `byte[]` to disk yourself |
+| `WebpEncodingConfig.builder().quality(new LossyWebp(75))`         | `WebpEncodeOptions.builder().quality(75f)`                                                 |
+| `WebpEncodingConfig.builder().quality(LosslessWebp.INSTANCE)`     | `WebpEncodeOptions.builder().lossless(true)`                                               |
+| `.method(CompressionMethod.M4)`                                   | `.method(4)` (plain `int`, 0–6)                                                            |
+| `.compressionFactor(75)`                                          | `.quality(75f)` (lossy) — or drop entirely when `lossless(true)`                           |
+| `.duration(Duration.ofMillis(d))` on the config                   | Per-frame `durationMs` on each `WebpFrame` / `WebpCompressedFrame`                         |
+| `Frame.BufferedImageFrame` / `Frame.PathFrame`                    | `WebpFrame` (raw RGBA via `MemorySegment`) or `WebpCompressedFrame` (JPEG/PNG bytes)       |
+| `PartialImage`                                                    | No equivalent — encode bytes directly, no temp-file marshalling                            |
 
-Map them to the modern API as follows:
+Notes on behavior changes worth knowing during migration:
 
-| Old                                     | New                                                |
-|-----------------------------------------|----------------------------------------------------|
-| `WebpWriter.encode(List<Path>)`         | `WebpAnimationEncoder.encodeJpegFrames` / `encodePngFrames` after reading the bytes |
-| `WebpUtils.animationFromImagesAsByteArrays(...)` | `WebpAnimationEncoder.encodeJpeg/PngFrames(...)` |
-| `LossyWebp(quality, method)`            | `WebpEncodeOptions.builder().quality(...).method(...).build()` |
-| `LosslessWebp(method)`                  | `WebpEncodeOptions.builder().lossless(true).method(...).build()` |
-| `Frame` (BufferedImage / Path)          | `WebpFrame` (raw) or `WebpCompressedFrame` (bytes) |
-| `WebpException` single-arg throw         | Same constructor; new overloads add native status / cause |
+- `BufferedImage` → RGBA conversion is now the caller's responsibility; see
+  [§4](#4-still-encode--raw-pixels) for the bulk `getRGB(0,0,w,h,…)` pattern.
+- For JPEG/PNG inputs, prefer `encodeJpegFrames` / `encodePngFrames` —
+  they decode natively (libjpeg-turbo / libpng) and skip the Java decode step.
+- `EncodedWebp` is `AutoCloseable` and owns native memory until `close()`. Use
+  it inside try-with-resources, or call `toByteArray()` once and discard.
+- Errors arrive as `WebpException` with an optional native status code via
+  `nativeStatus()` — see [§10](#10-error-handling).
 
 ## 12. Thread-safety
 

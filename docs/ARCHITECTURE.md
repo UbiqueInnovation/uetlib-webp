@@ -5,7 +5,6 @@
 - `src/main/java/ch/ubique/backend/image/webp`
   - Java API surface (`WebpEncoder`, `WebpAnimationEncoder`, options/frames/metadata)
   - `EncodedWebp` lifecycle wrapper for native-owned bytes
-  - `CompatibilityWebpEncoder` compatibility path from heap `byte[]`
 - `src/main/java/ch/ubique/backend/image/webp/ffi`
   - FFM bridge (`NativeWebpLibrary`, struct layouts, downcalls)
 - `native/include/uetlib_webp.h`
@@ -18,14 +17,6 @@
   - JMH benchmark suite (fast path vs CLI+temp-file baseline)
 - `docs/*.md`
   - Plan, benchmark plan, build matrix
-
-## Fast path vs compatibility path
-
-- Fast path:
-  - Java off-heap frame buffers (`MemorySegment`) passed directly to one native call.
-  - No subprocesses, no temp files.
-- Compatibility path:
-  - `byte[]` input copied into off-heap then encoded via fast path.
 
 ## Memory ownership and lifecycle
 

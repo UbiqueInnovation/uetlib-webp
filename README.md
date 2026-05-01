@@ -136,9 +136,8 @@ Default native-vs-CLI comparison benchmarks use CLI-equivalent encoder settings:
 Benchmarks suffixed with `Threaded` enable native `threadLevel=1` and are fast-path tuning benchmarks, not direct CLI-equivalent comparisons.
 The suite also includes direct/off-heap native benchmarks (`nativeStillDirectRgba`, `nativeAnimDirectRgba`) that reuse setup-owned `MemorySegment` frame buffers.
 Webcam sequence benchmarks are prefixed with `webcam` and use the six `LAN_...` JPEG frames in `src/test/resources/images`.
-Old-vs-new API benchmarks use the `oldCore...` and `newLibrary...` prefixes.
+`oldCore...` benchmarks load the legacy `uetlib-core` WebP API (CLI-backed) via reflection and compare it against the native FFM-based encoders here.
 `webcamNativeAnimJpegTurbo` and `webcamStreamNativeJpegTurbo` use native libjpeg-turbo decode plus native WebP animation encode.
-`WebpWriter.encode(List<Path>)` and `WebpUtils.animationFromImagesAsByteArrays(...)` automatically use native compressed paths when all inputs are JPEG or PNG.
 `webcamStreamCliAnimJpegTempFiles` models InputStream-to-temp-JPEG files followed by `img2webp`.
 `webcamStreamNativeImageIoDirectRgba` models InputStream-to-memory, Java `ImageIO` JPEG decode, then direct native WebP animation encode.
 Lossless PNG animation benchmarks are prefixed with `losslessPng` and use rendered frames extracted from `/Users/martinalig/Downloads/animation.webp`.
@@ -159,10 +158,3 @@ Attribution and license details are documented in `src/test/resources/images/ATT
 - Compressed PNG decode+encode path is implemented through libpng for animation inputs.
 - Other compatibility formats still fall back to Java `ImageIO`.
 
-## Deprecated surface
-
-The `WebpWriter` / `WebpUtils` / `WebpEncodingConfig` / `Frame` / `PartialImage` /
-`CompressionMethod` / `LosslessWebp` / `LossyWebp` / `WebpQuality` / `CompatibilityWebpEncoder`
-types are kept as `@Deprecated(forRemoval = true)` shims for source-compatibility with the
-old `uetlib-core` WebP API. New code should use `WebpEncoder` and `WebpAnimationEncoder`
-directly — see [`docs/USAGE.md`](docs/USAGE.md).

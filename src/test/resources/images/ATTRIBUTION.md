@@ -31,3 +31,12 @@ These files are used only for automated tests and come from Wikimedia Commons un
 - Direct download used in test corpus: https://commons.wikimedia.org/wiki/Special:FilePath/Milford%20Sound%20(New%20Zealand).JPG?width=1800
 - License on source page: Creative Commons Attribution-Share Alike 2.5 and 3.0 (plus GFDL)
 - Author (source page): Maros Mraz (Maros)
+
+6. `switzerland_map.png`
+- Synthetic two-tone (red background, navy silhouette) Switzerland outline used as a
+  best-case input for the lossless-encoder size-comparison test. No third-party
+  source; no copyright attached.
+
+7. `rapeseed_field.jpg`, `alpine_brook.jpg`, `alpine_lake.jpg`
+- Personal photographs supplied by the project owner for the lossy JPEG → WebP
+  size-comparison test. No third-party source.

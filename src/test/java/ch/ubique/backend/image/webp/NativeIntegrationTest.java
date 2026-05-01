@@ -110,34 +110,6 @@ class NativeIntegrationTest {
         }
     }
 
-    @ParameterizedTest
-    @MethodSource("allImages")
-    void compatibilityPathStillMatchesContainerSignature(String imagePath) {
-        ImageRgba input = loadImageRgba(imagePath);
-
-        CompatibilityWebpEncoder compatibility = new CompatibilityWebpEncoder();
-        byte[] bytes = compatibility.encodeStillRgba(input.pixels, input.width, input.height, WebpEncodeOptions.defaults());
-        assertTrue(bytes.length > 0);
-        assertWebpContainer(bytes);
-    }
-
-    @ParameterizedTest
-    @MethodSource("animationPairs")
-    void compatibilityPathAnimationMatchesContainerSignature(String first, String second) {
-        ImageRgba img1 = loadImageRgba(first);
-        ImageRgba img2 = loadImageRgba(second);
-        int width = Math.min(img1.width, img2.width);
-        int height = Math.min(img1.height, img2.height);
-
-        byte[] frameA = crop(img1.pixels, img1.width, width, height);
-        byte[] frameB = crop(img2.pixels, img2.width, width, height);
-
-        CompatibilityWebpEncoder compatibility = new CompatibilityWebpEncoder();
-        byte[] bytes = compatibility.encodeAnimationRgba(List.of(frameA, frameB), width, height, 40, WebpEncodeOptions.defaults());
-        assertTrue(bytes.length > 0);
-        assertWebpContainer(bytes);
-    }
-
     @Test
     void stillJpegBytesEntryPointProducesWebpContainer() throws Exception {
         byte[] jpeg = readResourceBytes(IMAGE_1);
@@ -340,22 +312,6 @@ class NativeIntegrationTest {
             return i;
         }
         return -1;
-    }
-
-    private static byte[] crop(byte[] src, int srcWidth, int width, int height) {
-        byte[] out = new byte[width * height * 4];
-        int p = 0;
-        for (int y = 0; y < height; y++) {
-            int srcRow = y * srcWidth * 4;
-            for (int x = 0; x < width; x++) {
-                int s = srcRow + x * 4;
-                out[p++] = src[s];
-                out[p++] = src[s + 1];
-                out[p++] = src[s + 2];
-                out[p++] = src[s + 3];
-            }
-        }
-        return out;
     }
 
     private static MemorySegment bytes(Arena arena, byte[] input) {

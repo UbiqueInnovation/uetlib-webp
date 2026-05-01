@@ -1,19 +1,14 @@
 package ch.ubique.backend.image.webp.bench;
 
-import ch.ubique.backend.image.webp.CompatibilityWebpEncoder;
 import ch.ubique.backend.image.webp.EncodedWebp;
 import ch.ubique.backend.image.webp.PixelFormat;
 import ch.ubique.backend.image.webp.WebpAnimationEncoder;
 import ch.ubique.backend.image.webp.WebpCompressedFrame;
-import ch.ubique.backend.image.webp.LossyWebp;
 import ch.ubique.backend.image.webp.WebpEncodeOptions;
 import ch.ubique.backend.image.webp.WebpEncoder;
-import ch.ubique.backend.image.webp.WebpEncodingConfig;
 import ch.ubique.backend.image.webp.WebpFrame;
 import ch.ubique.backend.image.webp.WebpMetadata;
 import ch.ubique.backend.image.webp.WebpRawImage;
-import ch.ubique.backend.image.webp.WebpUtils;
-import ch.ubique.backend.image.webp.WebpWriter;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -68,7 +63,6 @@ public class WebpEncodeBenchmark {
         "/images/lossless_animation/frame_012.png"
     };
 
-    private final CompatibilityWebpEncoder encoder = new CompatibilityWebpEncoder();
     private final WebpEncoder directStillEncoder = new WebpEncoder();
     private final WebpAnimationEncoder directAnimationEncoder = new WebpAnimationEncoder();
     private byte[] still;
@@ -98,8 +92,6 @@ public class WebpEncodeBenchmark {
     private WebpEncodeOptions losslessOptions;
     private WebpEncodeOptions threadedLosslessOptions;
     private WebpEncodeOptions losslessKeyframeOptions;
-    private WebpEncodingConfig compatLossyConfig;
-    private WebpEncodingConfig compatLosslessConfig;
     private LegacyCoreWebpAdapter legacyCore;
     private String stillCliPath;
     private String animationCliPath;
@@ -134,17 +126,6 @@ public class WebpEncodeBenchmark {
             .build();
         stillCliPath = System.getenv().getOrDefault("WEBP_CLI", "cwebp");
         animationCliPath = System.getenv().getOrDefault("WEBP_ANIM_CLI", "img2webp");
-        compatLossyConfig = WebpEncodingConfig.builder()
-            .duration(java.time.Duration.ofMillis(FRAME_DURATION_MS))
-            .quality(new LossyWebp(75))
-            .compressionFactor(75)
-            .method(ch.ubique.backend.image.webp.CompressionMethod.M4)
-            .build();
-        compatLosslessConfig = WebpEncodingConfig.builder()
-            .duration(java.time.Duration.ofMillis(FRAME_DURATION_MS))
-            .compressionFactor(75)
-            .method(ch.ubique.backend.image.webp.CompressionMethod.M4)
-            .build();
         benchmarkTempDir = Files.createTempDirectory("webp-bench-inputs-");
         loadWebcamFrames();
         loadLosslessAnimationFrames();
@@ -202,16 +183,6 @@ public class WebpEncodeBenchmark {
     }
 
     @Benchmark
-    public byte[] nativeStillRawRgba() {
-        return encoder.encodeStillRgba(still, WIDTH, HEIGHT, options);
-    }
-
-    @Benchmark
-    public byte[] nativeAnimRawRgba() {
-        return encoder.encodeAnimationRgba(animation, WIDTH, HEIGHT, FRAME_DURATION_MS, options);
-    }
-
-    @Benchmark
     public byte[] nativeStillDirectRgba() {
         try (EncodedWebp encoded = directStillEncoder.encodeStillRaw(directStill, options, WebpMetadata.EMPTY)) {
             return encoded.toByteArray();
@@ -249,11 +220,6 @@ public class WebpEncodeBenchmark {
             WebpMetadata.EMPTY)) {
             return encoded.toByteArray();
         }
-    }
-
-    @Benchmark
-    public byte[] webcamNativeAnimRawRgba() {
-        return encoder.encodeAnimationRgba(webcamAnimation, webcamWidth, webcamHeight, FRAME_DURATION_MS, options);
     }
 
     @Benchmark
@@ -414,30 +380,13 @@ public class WebpEncodeBenchmark {
     }
 
     @Benchmark
-    public byte[] newLibraryWebpWriterWebcamJpegPaths() throws IOException {
-        try (WebpWriter writer = new WebpWriter(compatLossyConfig)) {
-            return Files.readAllBytes(writer.encode(webcamAnimationJpegPaths));
-        }
-    }
-
-    @Benchmark
     public byte[] oldCoreWebpWriterWebcamJpegPaths() {
         return legacyCore().writerEncodePaths(webcamAnimationJpegPaths, true);
     }
 
     @Benchmark
-    public byte[] newLibraryWebpUtilsLosslessPngBytes() {
-        return WebpUtils.animationFromImagesAsByteArrays(losslessAnimationPng, compatLosslessConfig);
-    }
-
-    @Benchmark
     public byte[] oldCoreWebpUtilsLosslessPngBytes() {
         return legacyCore().animationFromImagesAsByteArrays(losslessAnimationPng, false);
-    }
-
-    @Benchmark
-    public byte[] losslessPngNativeAnimRawRgba() {
-        return encoder.encodeAnimationRgba(losslessAnimation, losslessWidth, losslessHeight, 1000, losslessOptions);
     }
 
     @Benchmark
