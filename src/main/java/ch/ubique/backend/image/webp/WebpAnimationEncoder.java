@@ -1,7 +1,6 @@
 package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.ffi.NativeWebpLibrary;
-import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
@@ -17,8 +16,6 @@ import java.util.List;
  * <tr><th>Source</th><th>Frame type</th><th>Entry point</th></tr>
  * <tr><td>Already-native RGBA frames</td><td>{@link WebpFrame}</td>
  *     <td>{@link #encodeRawFrames(List, int, int, int, WebpEncodeOptions, WebpMetadata)}</td></tr>
- * <tr><td>{@link BufferedImage} frames</td><td>—</td>
- *     <td>{@link #encodeBufferedImageFrames(List, List, int, int, int, WebpEncodeOptions, WebpMetadata)}</td></tr>
  * <tr><td>JPEG byte frames</td><td>{@link WebpCompressedFrame}</td>
  *     <td>{@link #encodeJpegFrames(List, int, int, int, WebpEncodeOptions, WebpMetadata)}</td></tr>
  * <tr><td>JPEG {@code byte[]} frames</td><td>{@link WebpCompressedFrameBytes}</td>
@@ -42,6 +39,8 @@ public final class WebpAnimationEncoder {
         WebpMetadata metadata
     ) {
         requireFrames(frames);
+        InputValidator.requirePositiveCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         return NativeWebpLibrary.encodeAnimRaw(
             frames,
             canvasWidth,
@@ -50,53 +49,6 @@ public final class WebpAnimationEncoder {
             options,
             metadata == null ? WebpMetadata.EMPTY : metadata
         );
-    }
-
-    /**
-     * Convenience: encode a list of {@link BufferedImage} frames. Each image is converted to
-     * RGBA inside a shared {@link Arena} for the duration of the call. Returns the WebP bytes
-     * as a heap {@code byte[]} (the native buffer is freed before return).
-     *
-     * @param images one {@link BufferedImage} per frame — must be non-empty
-     * @param durationsMs parallel list of per-frame durations in milliseconds; must match
-     *                    {@code images} in size and contain only positive values
-     * @param canvasWidth WebP canvas width
-     * @param canvasHeight WebP canvas height
-     * @param backgroundRgba ARGB background for transparent frames (pass {@code 0} for black)
-     */
-    public byte[] encodeBufferedImageFrames(
-        List<BufferedImage> images,
-        List<Integer> durationsMs,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
-        requireFrames(images);
-        if (durationsMs == null || durationsMs.size() != images.size()) {
-            throw new IllegalArgumentException(
-                "durationsMs must be non-null and match images in size");
-        }
-        try (Arena arena = Arena.ofShared()) {
-            List<WebpFrame> frames = new ArrayList<>(images.size());
-            for (int i = 0; i < images.size(); i++) {
-                BufferedImage img = images.get(i);
-                Integer dur = durationsMs.get(i);
-                if (dur == null || dur <= 0) {
-                    throw new IllegalArgumentException(
-                        "durationsMs[" + i + "] must be > 0 (was " + dur + ")");
-                }
-                WebpRawImage raw = WebpImages.toRawImage(img, arena);
-                frames.add(new WebpFrame(
-                    raw.pixels(), raw.width(), raw.height(), raw.stride(),
-                    raw.pixelFormat(), dur));
-            }
-            try (EncodedWebp out = encodeRawFrames(
-                    frames, canvasWidth, canvasHeight, backgroundRgba, options, metadata)) {
-                return out.toByteArray();
-            }
-        }
     }
 
     /* ---------- Compressed (JPEG / PNG) frames ----------------------------------------------- */
@@ -110,6 +62,8 @@ public final class WebpAnimationEncoder {
         WebpMetadata metadata
     ) {
         requireFrames(frames);
+        InputValidator.requireOptionalCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         return NativeWebpLibrary.encodeAnimJpegs(
             frames, canvasWidth, canvasHeight, backgroundRgba, options,
             metadata == null ? WebpMetadata.EMPTY : metadata);
@@ -124,6 +78,8 @@ public final class WebpAnimationEncoder {
         WebpMetadata metadata
     ) {
         requireFrames(frames);
+        InputValidator.requireOptionalCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         return NativeWebpLibrary.encodeAnimPngs(
             frames, canvasWidth, canvasHeight, backgroundRgba, options,
             metadata == null ? WebpMetadata.EMPTY : metadata);
@@ -171,6 +127,8 @@ public final class WebpAnimationEncoder {
         boolean png
     ) {
         requireFrames(frames);
+        InputValidator.requireOptionalCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         try (Arena arena = Arena.ofShared()) {
             List<WebpCompressedFrame> wrapped = new ArrayList<>(frames.size());
             for (int i = 0; i < frames.size(); i++) {
@@ -206,6 +164,8 @@ public final class WebpAnimationEncoder {
      */
     public WebpAnimationStream openJpegStream(
         int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
+        InputValidator.requirePositiveCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options,
             WebpAnimationStream.FrameFormat.JPEG);
     }
@@ -213,6 +173,8 @@ public final class WebpAnimationEncoder {
     /** Streaming PNG-frame variant of {@link #openJpegStream}. */
     public WebpAnimationStream openPngStream(
         int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
+        InputValidator.requirePositiveCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options,
             WebpAnimationStream.FrameFormat.PNG);
     }
@@ -226,6 +188,8 @@ public final class WebpAnimationEncoder {
      */
     public WebpAnimationStream openWebpStream(
         int canvasWidth, int canvasHeight, int backgroundRgba, WebpEncodeOptions options) {
+        InputValidator.requirePositiveCanvas(canvasWidth, canvasHeight);
+        InputValidator.requireAnimationOptions(options);
         return new WebpAnimationStream(canvasWidth, canvasHeight, backgroundRgba, options,
             WebpAnimationStream.FrameFormat.WEBP);
     }

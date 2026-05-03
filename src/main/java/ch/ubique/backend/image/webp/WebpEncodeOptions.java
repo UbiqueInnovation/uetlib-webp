@@ -60,6 +60,70 @@ public final class WebpEncodeOptions {
     public boolean allowMixed() { return allowMixed; }
     public boolean minimizeSize() { return minimizeSize; }
 
+    void validateStill() {
+        validateCommon();
+        if (loopCount != 0 || kmin != 0 || kmax != 0 || allowMixed || minimizeSize) {
+            throw new IllegalArgumentException(
+                "animation-only options must remain at defaults for still encodes");
+        }
+    }
+
+    void validateAnimation() {
+        validateCommon();
+        if ((kmin == 0) != (kmax == 0)) {
+            throw new IllegalArgumentException("kmin and kmax must either both be 0 or both be > 0");
+        }
+        if (kmin > 0 && kmin >= kmax) {
+            throw new IllegalArgumentException("kmin must be < kmax when keyframe bounds are set");
+        }
+    }
+
+    private void validateCommon() {
+        requireRange("quality", quality, 0f, 100f);
+        requireRange("method", method, 0, 6);
+        requireRange("nearLossless", nearLossless, 0, 100);
+        requireNonNegative("targetSize", targetSize);
+        requireFiniteNonNegative("targetPsnr", targetPsnr);
+        requireBooleanInt("threadLevel", threadLevel);
+        requireRange("alphaQuality", alphaQuality, 0, 100);
+        requireNonNegative("loopCount", loopCount);
+        requireNonNegative("kmin", kmin);
+        requireNonNegative("kmax", kmax);
+        if (targetSize > 0 && targetPsnr > 0f) {
+            throw new IllegalArgumentException("targetSize and targetPsnr are mutually exclusive");
+        }
+    }
+
+    private static void requireBooleanInt(String label, int value) {
+        if (value != 0 && value != 1) {
+            throw new IllegalArgumentException(label + " must be 0 or 1");
+        }
+    }
+
+    private static void requireNonNegative(String label, int value) {
+        if (value < 0) {
+            throw new IllegalArgumentException(label + " must be >= 0");
+        }
+    }
+
+    private static void requireRange(String label, int value, int min, int max) {
+        if (value < min || value > max) {
+            throw new IllegalArgumentException(label + " must be in [" + min + ", " + max + "]");
+        }
+    }
+
+    private static void requireRange(String label, float value, float min, float max) {
+        if (!Float.isFinite(value) || value < min || value > max) {
+            throw new IllegalArgumentException(label + " must be finite and in [" + min + ", " + max + "]");
+        }
+    }
+
+    private static void requireFiniteNonNegative(String label, float value) {
+        if (!Float.isFinite(value) || value < 0f) {
+            throw new IllegalArgumentException(label + " must be finite and >= 0");
+        }
+    }
+
     public static final class Builder {
         private boolean lossless;
         private float quality = 75f;
@@ -92,7 +156,9 @@ public final class WebpEncodeOptions {
         public Builder minimizeSize(boolean value) { this.minimizeSize = value; return this; }
 
         public WebpEncodeOptions build() {
-            return new WebpEncodeOptions(this);
+            WebpEncodeOptions options = new WebpEncodeOptions(this);
+            options.validateAnimation();
+            return options;
         }
     }
 }

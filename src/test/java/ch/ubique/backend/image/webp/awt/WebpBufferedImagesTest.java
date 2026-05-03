@@ -1,5 +1,8 @@
-package ch.ubique.backend.image.webp;
+package ch.ubique.backend.image.webp.awt;
 
+import ch.ubique.backend.image.webp.PixelFormat;
+import ch.ubique.backend.image.webp.WebpPixels;
+import ch.ubique.backend.image.webp.WebpRawImage;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
@@ -12,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class WebpImagesTest {
+class WebpBufferedImagesTest {
 
     @Test
     void toRawImagePacksArgbIntoRgbaSegment() {
@@ -21,7 +24,7 @@ class WebpImagesTest {
         image.setRGB(1, 0, new Color(200, 150, 100, 255).getRGB());
 
         try (Arena arena = Arena.ofConfined()) {
-            WebpRawImage raw = WebpImages.toRawImage(image, arena);
+            WebpRawImage raw = WebpBufferedImages.toRawImage(image, arena);
             assertEquals(2, raw.width());
             assertEquals(1, raw.height());
             assertEquals(8, raw.stride());
@@ -39,7 +42,7 @@ class WebpImagesTest {
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
         image.setRGB(0, 0, new Color(5, 6, 7).getRGB());
         try (Arena arena = Arena.ofConfined()) {
-            WebpRawImage raw = WebpImages.toRawImage(image, arena);
+            WebpRawImage raw = WebpBufferedImages.toRawImage(image, arena);
             byte[] bytes = toHeap(raw.pixels());
             assertArrayEquals(new byte[]{5, 6, 7, (byte) 0xFF}, bytes);
         }
@@ -49,9 +52,9 @@ class WebpImagesTest {
     void toRawImageRejectsNullArguments() {
         try (Arena arena = Arena.ofConfined()) {
             assertThrows(IllegalArgumentException.class,
-                () -> WebpImages.toRawImage(null, arena));
+                () -> WebpBufferedImages.toRawImage(null, arena));
             assertThrows(IllegalArgumentException.class,
-                () -> WebpImages.toRawImage(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB), null));
+                () -> WebpBufferedImages.toRawImage(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB), null));
         }
     }
 
@@ -63,7 +66,7 @@ class WebpImagesTest {
         image.setRGB(0, 1, new Color(9, 10, 11, 12).getRGB());
         image.setRGB(1, 1, new Color(13, 14, 15, 16).getRGB());
 
-        byte[] bytes = WebpImages.toRgbaBytes(image);
+        byte[] bytes = WebpBufferedImages.toRgbaBytes(image);
         assertArrayEquals(new byte[]{
             1, 2, 3, 4,
             5, 6, 7, 8,
@@ -74,13 +77,13 @@ class WebpImagesTest {
 
     @Test
     void toRgbaBytesRejectsNull() {
-        assertThrows(IllegalArgumentException.class, () -> WebpImages.toRgbaBytes(null));
+        assertThrows(IllegalArgumentException.class, () -> WebpBufferedImages.toRgbaBytes(null));
     }
 
     @Test
     void allocateRgbaReturnsZeroedSegmentOfExpectedSize() {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment seg = WebpImages.allocateRgba(arena, 3, 4);
+            MemorySegment seg = WebpPixels.allocateRgba(arena, 3, 4);
             assertNotNull(seg);
             assertEquals(3L * 4L * 4L, seg.byteSize());
             for (long i = 0; i < seg.byteSize(); i++) {
@@ -93,11 +96,11 @@ class WebpImagesTest {
     void allocateRgbaRejectsBadInputs() {
         try (Arena arena = Arena.ofConfined()) {
             assertThrows(IllegalArgumentException.class,
-                () -> WebpImages.allocateRgba(null, 1, 1));
+                () -> WebpPixels.allocateRgba(null, 1, 1));
             assertThrows(IllegalArgumentException.class,
-                () -> WebpImages.allocateRgba(arena, 0, 1));
+                () -> WebpPixels.allocateRgba(arena, 0, 1));
             assertThrows(IllegalArgumentException.class,
-                () -> WebpImages.allocateRgba(arena, 1, -1));
+                () -> WebpPixels.allocateRgba(arena, 1, -1));
         }
     }
 
@@ -111,7 +114,7 @@ class WebpImagesTest {
         };
         try (Arena arena = Arena.ofConfined()) {
             assertThrows(IllegalArgumentException.class,
-                () -> WebpImages.toRawImage(zero, arena));
+                () -> WebpBufferedImages.toRawImage(zero, arena));
         }
     }
 

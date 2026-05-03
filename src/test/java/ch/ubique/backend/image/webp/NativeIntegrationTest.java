@@ -207,13 +207,8 @@ class NativeIntegrationTest {
     void stillWithInvalidStrideFailsCleanly() {
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment rgba = arena.allocate(16 * 16 * 4L);
-            WebpRawImage image = new WebpRawImage(rgba, 16, 16, 1, PixelFormat.RGBA);
-
-            WebpEncoder encoder = new WebpEncoder();
-            assertThrows(WebpException.class, () -> encoder.encodeStillRaw(
-                image,
-                WebpEncodeOptions.defaults(),
-                WebpMetadata.EMPTY));
+            assertThrows(IllegalArgumentException.class, () ->
+                new WebpRawImage(rgba, 16, 16, 1, PixelFormat.RGBA));
         }
     }
 

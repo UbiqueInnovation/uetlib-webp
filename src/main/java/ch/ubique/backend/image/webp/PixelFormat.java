@@ -7,12 +7,18 @@ public enum PixelFormat {
     BGR(4);
 
     private final int nativeCode;
+    private final int bytesPerPixel;
 
     PixelFormat(int nativeCode) {
         this.nativeCode = nativeCode;
+        this.bytesPerPixel = nativeCode == 1 || nativeCode == 3 ? 4 : 3;
     }
 
     public int nativeCode() {
         return nativeCode;
+    }
+
+    public int bytesPerPixel() {
+        return bytesPerPixel;
     }
 }
