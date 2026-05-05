@@ -31,6 +31,7 @@ For classpath (unnamed module) consumers use `ALL-UNNAMED` instead.
 |-----------------------------|---------------------------------------------------|
 | `WebpEncoder`               | Single-image encode (raw / JPEG bytes / PNG bytes) |
 | `WebpAnimationEncoder`      | Multi-frame encode (raw / JPEG / PNG frames)      |
+| `Webp`                      | One-line still-image facade for common conversions |
 | `WebpBufferedImageEncoder`  | `BufferedImage` convenience wrapper               |
 | `WebpBufferedImageAnimationEncoder` | `BufferedImage` animation convenience wrapper |
 | `WebpRawImage`              | Descriptor for one raw-pixel image                |
@@ -44,7 +45,21 @@ For classpath (unnamed module) consumers use `ALL-UNNAMED` instead.
 `PixelFormat` values: `RGBA`, `RGB`, `BGRA`, `BGR`. Stride is in bytes and must
 match the row layout of the supplied `MemorySegment`.
 
-## 3. Build encoder options
+## 3. Quick facade
+
+For straightforward conversions, start with the high-level facade:
+
+```java
+byte[] webp = Webp.lossless().encodePng(pngBytes);
+byte[] webp = Webp.lossy(80f).encodeJpeg(jpegBytes);
+byte[] webp = Webp.lossy(75f).encode(bufferedImage);
+byte[] webp = Webp.lossless().encodePng(pngBytes, WebpMetadata.xmp(xmpXml));
+```
+
+Use the lower-level encoder APIs below when you need explicit raw-buffer control,
+streaming animation, or direct access to `EncodedWebp`.
+
+## 4. Build encoder options
 
 ```java
 WebpEncodeOptions opts = WebpEncodeOptions.builder()
@@ -62,7 +77,7 @@ WebpEncodeOptions opts = WebpEncodeOptions.builder()
 Defaults match CLI parity with `cwebp`/`img2webp`: `quality=75, method=4,
 threadLevel=1, alphaQuality=100, loopCount=0`.
 
-## 4. Still encode — raw pixels
+## 5. Still encode — raw pixels
 
 ```java
 import ch.ubique.backend.image.webp.*;
@@ -82,7 +97,7 @@ try (Arena arena = Arena.ofConfined()) {
 }
 ```
 
-## 5. Still encode — JPEG / PNG bytes (no Java decode)
+## 6. Still encode — JPEG / PNG bytes (no Java decode)
 
 The native layer decodes via libjpeg-turbo / libpng and encodes as WebP in one
 C call, skipping `ImageIO` / `BufferedImage` entirely.
@@ -104,7 +119,7 @@ copy into a confined arena for the duration of the call; use the
 `MemorySegment` overloads when you already hold native memory (e.g. from
 `MemorySegment.ofBuffer`) to avoid the copy.
 
-## 6. Still encode — `BufferedImage`
+## 7. Still encode — `BufferedImage`
 
 AWT-facing helpers live in `ch.ubique.backend.image.webp.awt`, keeping the core
 raw/compressed API separate from `BufferedImage` conversion:
@@ -116,7 +131,7 @@ byte[] webp = new WebpBufferedImageEncoder()
     .encode(bufferedImage, opts, WebpMetadata.EMPTY);
 ```
 
-## 7. Animation encode — raw frames
+## 8. Animation encode — raw frames
 
 ```java
 List<WebpFrame> frames = new ArrayList<>();
@@ -143,7 +158,7 @@ The shared arena keeps every frame buffer alive for the duration of the native
 call; closing the arena after `encodeRawFrames` returns is safe because
 `EncodedWebp` owns its own malloc'd output buffer.
 
-## 8. Animation encode — JPEG / PNG byte frames
+## 9. Animation encode — JPEG / PNG byte frames
 
 Use these when your source is already compressed (common for webcam / MJPEG
 streams or PNG sprite sequences). The native layer decodes each frame with
@@ -164,7 +179,7 @@ try (EncodedWebp out = new WebpAnimationEncoder().encodeJpegFrames(
 
 `encodePngFrames(...)` is the PNG equivalent.
 
-## 9. Animation encode — `BufferedImage` frames
+## 10. Animation encode — `BufferedImage` frames
 
 ```java
 import ch.ubique.backend.image.webp.awt.WebpBufferedImageAnimationEncoder;
@@ -173,7 +188,7 @@ byte[] webp = new WebpBufferedImageAnimationEncoder().encodeFrames(
     frames, durationsMs, width, height, 0, opts, WebpMetadata.EMPTY);
 ```
 
-## 10. Attaching metadata
+## 11. Attaching metadata
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
@@ -190,7 +205,7 @@ try (Arena arena = Arena.ofConfined()) {
 Any of EXIF/ICCP/XMP may be `MemorySegment.NULL` to skip that chunk. Segment
 sizes are derived from `byteSize()` — allocate exactly the payload length.
 
-## 11. Consuming `EncodedWebp`
+## 12. Consuming `EncodedWebp`
 
 `EncodedWebp` holds one malloc-owned buffer. Call `close()` (usually via
 try-with-resources) to release it deterministically. If you forget, a
@@ -210,7 +225,7 @@ try (EncodedWebp out = encoder.encodeStillRaw(image, opts, WebpMetadata.EMPTY)) 
 Double-close is safe. Accessing `bytes()` / `size()` / `toByteArray()` after
 `close()` throws `IllegalStateException`.
 
-## 12. Error handling
+## 13. Error handling
 
 All encode methods throw `WebpException` (a `RuntimeException`) on failure.
 Native-side failures propagate the libwebp status code:
@@ -228,7 +243,7 @@ try {
 `nativeStatus()` returns `OptionalInt.empty()` for exceptions raised purely on
 the Java side (e.g. invalid arguments before reaching native code).
 
-## 13. Migrating from `uetlib-core`
+## 14. Migrating from `uetlib-core`
 
 The legacy `uetlib-core` WebP API shells out to `cwebp` / `img2webp` /
 `webpmux` and exposes types like `WebpWriter`, `WebpUtils`, `WebpEncodingConfig`,
@@ -261,18 +276,19 @@ Notes on behavior changes worth knowing during migration:
 - `EncodedWebp` is `AutoCloseable` and owns native memory until `close()`. Use
   it inside try-with-resources, or call `toByteArray()` once and discard.
 - Errors arrive as `WebpException` with an optional native status code via
-  `nativeStatus()` — see [§10](#10-error-handling).
+  `nativeStatus()` — see [§13](#13-error-handling).
 
-## 14. Thread-safety
+## 15. Thread-safety
 
 `WebpEncoder` and `WebpAnimationEncoder` are stateless — a single instance is
 safe to share across threads. Each encode call allocates its own `Arena`
 internally and does not mutate shared state. `WebpEncodeOptions` is immutable.
+`Webp.Still` is also stateless and safe to reuse across threads.
 
 The native layer uses `threadLevel` on the `WebPConfig` to drive libwebp's own
 worker threads; this is independent of caller threads.
 
-## 15. Benchmarking
+## 16. Benchmarking
 
 Running the suite:
 

@@ -2,6 +2,26 @@
 
 Production-oriented in-process WebP engine for Java.
 
+## Quick start
+
+Lossless PNG bytes to WebP in one line:
+
+```java
+byte[] webp = Webp.lossless().encodePng(pngBytes);
+```
+
+Lossy JPEG bytes:
+
+```java
+byte[] webp = Webp.lossy(80f).encodeJpeg(jpegBytes);
+```
+
+`BufferedImage`:
+
+```java
+byte[] webp = Webp.lossy(75f).encode(image);
+```
+
 ## What is implemented now
 
 - In-memory still WebP encode from raw pixel buffers (RGBA/RGB/BGRA/BGR)
@@ -9,6 +29,7 @@ Production-oriented in-process WebP engine for Java.
 - In-memory animated WebP encode from raw frames in one native call
 - Native compressed JPEG / PNG animation paths
 - Optional AWT/`BufferedImage` helpers exposed under `ch.ubique.backend.image.webp.awt`
+- High-level `Webp` facade for one-line still-image conversions
 - Lossy + lossless options exposed
 - Metadata attachment (EXIF/ICCP/XMP)
 - Java integration via the FFM API (Java 25, JPMS module `ch.ubique.backend.image.webp`)
@@ -90,6 +111,15 @@ WebpEncoder encoder = new WebpEncoder();
 try (EncodedWebp out = encoder.encodeStillJpeg(jpegBytes, opts, WebpMetadata.EMPTY)) {
     byte[] webp = out.toByteArray();
 }
+```
+
+High-level facade:
+
+```java
+import ch.ubique.backend.image.webp.Webp;
+
+byte[] lossless = Webp.lossless().encodePng(pngBytes);
+byte[] lossy = Webp.lossy(80f).encodeJpeg(jpegBytes);
 ```
 
 `BufferedImage` convenience lives in the AWT package:
