@@ -252,7 +252,7 @@ class WebpAnimationStreamNativeTest {
     @Test
     void streamRejectsInvalidArguments() {
         WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        assertThrows(WebpException.class,
+        assertThrows(IllegalArgumentException.class,
             () -> encoder.openJpegStream(-1, 64, 0, WebpEncodeOptions.defaults()));
     }
 
