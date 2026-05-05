@@ -185,6 +185,12 @@ uetlib_webp_status uetlib_webp_anim_stream_add_png(
     int duration_ms,
     uetlib_webp_result* out_error);
 
+uetlib_webp_status uetlib_webp_anim_stream_add_webp(
+    uetlib_webp_anim_stream* stream,
+    const uint8_t* webp, size_t webp_size,
+    int duration_ms,
+    uetlib_webp_result* out_error);
+
 uetlib_webp_status uetlib_webp_anim_stream_finish(
     uetlib_webp_anim_stream* stream,
     const uetlib_webp_metadata* metadata,

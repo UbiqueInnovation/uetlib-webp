@@ -8,6 +8,7 @@ Production-oriented in-process WebP engine for Java.
 - Direct still WebP encode from JPEG bytes (libjpeg-turbo) and PNG bytes (libpng) — no Java decode hop
 - In-memory animated WebP encode from raw frames in one native call
 - Native compressed JPEG / PNG animation paths
+- Optional AWT/`BufferedImage` helpers exposed under `ch.ubique.backend.image.webp.awt`
 - Lossy + lossless options exposed
 - Metadata attachment (EXIF/ICCP/XMP)
 - Java integration via the FFM API (Java 25, JPMS module `ch.ubique.backend.image.webp`)
@@ -19,6 +20,7 @@ For end-to-end usage examples see [`docs/USAGE.md`](docs/USAGE.md).
 ## Repository layout
 
 - `src/main/java/ch/ubique/backend/image/webp`: Java API
+- `src/main/java/ch/ubique/backend/image/webp/awt`: optional AWT/`BufferedImage` adapters
 - `src/main/java/ch/ubique/backend/image/webp/ffi`: FFM bridge
 - `native/include/uetlib_webp.h`: native ABI
 - `native/src/uetlib_webp.c`: native implementation
@@ -90,6 +92,14 @@ try (EncodedWebp out = encoder.encodeStillJpeg(jpegBytes, opts, WebpMetadata.EMP
 }
 ```
 
+`BufferedImage` convenience lives in the AWT package:
+
+```java
+import ch.ubique.backend.image.webp.awt.WebpBufferedImageEncoder;
+
+byte[] webp = new WebpBufferedImageEncoder().encode(image, opts, WebpMetadata.EMPTY);
+```
+
 Run on Java 25 with `--enable-native-access=ch.ubique.backend.image.webp`
 (or `ALL-UNNAMED` for unnamed-module / classpath consumers).
 
@@ -157,4 +167,3 @@ Attribution and license details are documented in `src/test/resources/images/ATT
 - Compressed JPEG decode+encode path is implemented through libjpeg-turbo for animation inputs.
 - Compressed PNG decode+encode path is implemented through libpng for animation inputs.
 - Other compatibility formats still fall back to Java `ImageIO`.
-

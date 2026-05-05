@@ -24,6 +24,12 @@ public final class EncodedWebp implements AutoCloseable {
     private final Cleaner.Cleanable cleanable;
 
     public EncodedWebp(MemorySegment nativeData, long size) {
+        if (nativeData == null || nativeData.equals(MemorySegment.NULL)) {
+            throw new IllegalArgumentException("nativeData must be non-null/non-NULL");
+        }
+        if (size <= 0) {
+            throw new IllegalArgumentException("size must be > 0");
+        }
         this.nativeData = nativeData;
         this.size = size;
         this.state = new State(nativeData.address());
@@ -42,6 +48,9 @@ public final class EncodedWebp implements AutoCloseable {
 
     public byte[] toByteArray() {
         ensureOpen();
+        if (size > Integer.MAX_VALUE) {
+            throw new IllegalStateException("EncodedWebp exceeds maximum heap byte[] size: " + size);
+        }
         byte[] out = new byte[(int) size];
         MemorySegment.copy(bytes(), 0, MemorySegment.ofArray(out), 0, size);
         return out;

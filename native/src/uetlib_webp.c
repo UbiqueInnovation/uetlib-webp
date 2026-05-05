@@ -200,17 +200,66 @@ static uetlib_webp_status mux_metadata_owned(
 static int valid_options(const uetlib_webp_encode_options* options) {
     return options != NULL &&
            options->struct_size >= sizeof(uetlib_webp_encode_options) &&
-           options->abi_version == UETLIB_WEBP_ABI_VERSION;
+           options->abi_version == UETLIB_WEBP_ABI_VERSION &&
+           options->quality == options->quality &&
+           options->quality >= 0.0f &&
+           options->quality <= 100.0f &&
+           options->method >= 0 &&
+           options->method <= 6 &&
+           options->near_lossless >= 0 &&
+           options->near_lossless <= 100 &&
+           options->target_size >= 0 &&
+           options->target_psnr == options->target_psnr &&
+           options->target_psnr >= 0.0f &&
+           options->thread_level >= 0 &&
+           options->thread_level <= 1 &&
+           options->alpha_quality >= 0 &&
+           options->alpha_quality <= 100 &&
+           options->loop_count >= 0 &&
+           options->kmin >= 0 &&
+           options->kmax >= 0 &&
+           !(options->target_size > 0 && options->target_psnr > 0.0f);
+}
+
+static int valid_still_options(const uetlib_webp_encode_options* options) {
+    return valid_options(options) &&
+           options->loop_count == 0 &&
+           options->kmin == 0 &&
+           options->kmax == 0 &&
+           options->allow_mixed == 0 &&
+           options->minimize_size == 0;
+}
+
+static int valid_animation_options(const uetlib_webp_encode_options* options) {
+    return valid_options(options) &&
+           ((options->kmin == 0 && options->kmax == 0) ||
+            (options->kmin > 0 && options->kmax > 0 && options->kmin < options->kmax));
+}
+
+static int bytes_per_pixel(int pixel_format) {
+    switch (pixel_format) {
+        case UETLIB_WEBP_PIXEL_RGBA:
+        case UETLIB_WEBP_PIXEL_BGRA:
+            return 4;
+        case UETLIB_WEBP_PIXEL_RGB:
+        case UETLIB_WEBP_PIXEL_BGR:
+            return 3;
+        default:
+            return 0;
+    }
 }
 
 static int valid_image(const uetlib_webp_raw_image* image) {
+    int bpp;
     return image != NULL &&
            image->struct_size >= sizeof(uetlib_webp_raw_image) &&
            image->abi_version == UETLIB_WEBP_ABI_VERSION &&
            image->pixels != NULL &&
            image->width > 0 &&
            image->height > 0 &&
-           image->stride > 0;
+           image->stride > 0 &&
+           ((bpp = bytes_per_pixel(image->pixel_format)) > 0) &&
+           image->stride >= image->width * bpp;
 }
 
 static void png_read_from_memory(png_structp png_ptr, png_bytep out_bytes, png_size_t byte_count) {
@@ -486,7 +535,7 @@ uetlib_webp_status uetlib_webp_encode_still_raw(
     }
     init_result(out_result);
 
-    if (!valid_image(image) || !valid_options(options)) {
+    if (!valid_image(image) || !valid_still_options(options)) {
         set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid image/options struct");
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
@@ -504,7 +553,7 @@ uetlib_webp_status uetlib_webp_encode_still_jpeg(
     }
     init_result(out_result);
 
-    if (jpeg == NULL || jpeg_size == 0 || !valid_options(options)) {
+    if (jpeg == NULL || jpeg_size == 0 || !valid_still_options(options)) {
         set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid JPEG input/options");
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
@@ -571,7 +620,7 @@ uetlib_webp_status uetlib_webp_encode_still_png(
     }
     init_result(out_result);
 
-    if (png == NULL || png_size == 0 || !valid_options(options)) {
+    if (png == NULL || png_size == 0 || !valid_still_options(options)) {
         set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid PNG input/options");
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
@@ -613,7 +662,7 @@ uetlib_webp_status uetlib_webp_encode_anim_raw(
         job->frame_count == 0 ||
         job->canvas_width <= 0 ||
         job->canvas_height <= 0 ||
-        !valid_options(options)) {
+        !valid_animation_options(options)) {
         set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid animation job/options struct");
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
@@ -699,7 +748,7 @@ static uetlib_webp_status start_compressed_anim(
         job->abi_version != UETLIB_WEBP_ABI_VERSION ||
         job->frames == NULL ||
         job->frame_count == 0 ||
-        !valid_options(options)) {
+        !valid_animation_options(options)) {
         set_error(out_result, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid compressed animation job/options struct");
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
@@ -1019,7 +1068,7 @@ uetlib_webp_status uetlib_webp_anim_stream_open(
     init_result(out_error);
     *out_stream = NULL;
 
-    if (canvas_width <= 0 || canvas_height <= 0 || !valid_options(options)) {
+    if (canvas_width <= 0 || canvas_height <= 0 || !valid_animation_options(options)) {
         set_error(out_error, UETLIB_WEBP_STATUS_INVALID_ARGUMENT, "Invalid stream open arguments");
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }

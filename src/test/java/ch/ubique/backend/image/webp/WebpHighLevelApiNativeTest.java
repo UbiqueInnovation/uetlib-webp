@@ -1,5 +1,7 @@
 package ch.ubique.backend.image.webp;
 
+import ch.ubique.backend.image.webp.awt.WebpBufferedImageAnimationEncoder;
+import ch.ubique.backend.image.webp.awt.WebpBufferedImageEncoder;
 import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,10 +19,10 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 /**
  * Native integration tests for the heap-friendly encoder overloads added on top of the
  * {@link MemorySegment}-based API. These mirror {@code NativeIntegrationTest} but drive the
- * higher-level entry points ({@link WebpEncoder#encodeStill(BufferedImage, WebpEncodeOptions, WebpMetadata)},
+ * higher-level entry points ({@link WebpBufferedImageEncoder#encode(BufferedImage, WebpEncodeOptions, WebpMetadata)},
  * {@link WebpEncoder#encodeStillJpegToBytes(byte[], WebpEncodeOptions, WebpMetadata)},
  * {@link WebpEncoder#encodeStillPngToBytes(byte[], WebpEncodeOptions, WebpMetadata)},
- * {@link WebpAnimationEncoder#encodeBufferedImageFrames},
+ * {@link WebpBufferedImageAnimationEncoder#encodeFrames},
  * {@link WebpAnimationEncoder#encodeJpegFrameBytes},
  * {@link WebpAnimationEncoder#encodePngFrameBytes}).
  */
@@ -37,16 +39,16 @@ class WebpHighLevelApiNativeTest {
     @Test
     void encodeStillBufferedImageReturnsHeapWebp() throws Exception {
         BufferedImage img = loadImage(JPEG_RESOURCE);
-        WebpEncoder encoder = new WebpEncoder();
+        WebpBufferedImageEncoder encoder = new WebpBufferedImageEncoder();
 
-        byte[] bytes = encoder.encodeStill(img, WebpEncodeOptions.defaults(), null);
+        byte[] bytes = encoder.encode(img, WebpEncodeOptions.defaults(), null);
         assertWebpContainer(bytes);
     }
 
     @Test
     void encodeStillBufferedImageEmbedsHeapMetadataInOneCall() throws Exception {
         BufferedImage img = loadImage(JPEG_RESOURCE);
-        WebpEncoder encoder = new WebpEncoder();
+        WebpBufferedImageEncoder encoder = new WebpBufferedImageEncoder();
 
         String xmp = "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"/>";
         byte[] exif = "Exif-sample".getBytes(StandardCharsets.US_ASCII);
@@ -55,7 +57,7 @@ class WebpHighLevelApiNativeTest {
             .exif(exif)
             .build();
 
-        byte[] bytes = encoder.encodeStill(img, WebpEncodeOptions.defaults(), metadata);
+        byte[] bytes = encoder.encode(img, WebpEncodeOptions.defaults(), metadata);
         assertWebpContainer(bytes);
         assertTrue(indexOf(bytes, "EXIF".getBytes(StandardCharsets.US_ASCII)) >= 0,
             "EXIF chunk marker not found");
@@ -87,8 +89,8 @@ class WebpHighLevelApiNativeTest {
         int w = Math.min(f1.getWidth(), f2.getWidth());
         int h = Math.min(f1.getHeight(), f2.getHeight());
 
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        byte[] bytes = encoder.encodeBufferedImageFrames(
+        WebpBufferedImageAnimationEncoder encoder = new WebpBufferedImageAnimationEncoder();
+        byte[] bytes = encoder.encodeFrames(
             List.of(cropped(f1, w, h), cropped(f2, w, h)),
             List.of(40, 40),
             w, h, 0,

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WebpEncodeOptionsTest {
@@ -35,7 +36,6 @@ class WebpEncodeOptionsTest {
             .exact(true)
             .nearLossless(80)
             .targetSize(2048)
-            .targetPsnr(40.5f)
             .threadLevel(0)
             .alphaQuality(91)
             .loopCount(2)
@@ -51,7 +51,7 @@ class WebpEncodeOptionsTest {
         assertTrue(options.exact());
         assertEquals(80, options.nearLossless());
         assertEquals(2048, options.targetSize());
-        assertEquals(40.5f, options.targetPsnr());
+        assertEquals(0f, options.targetPsnr());
         assertEquals(0, options.threadLevel());
         assertEquals(91, options.alphaQuality());
         assertEquals(2, options.loopCount());
@@ -59,5 +59,12 @@ class WebpEncodeOptionsTest {
         assertEquals(17, options.kmax());
         assertTrue(options.allowMixed());
         assertTrue(options.minimizeSize());
+    }
+
+    @Test
+    void builderRejectsInvalidRanges() {
+        assertThrows(IllegalArgumentException.class, () -> WebpEncodeOptions.builder().quality(Float.NaN).build());
+        assertThrows(IllegalArgumentException.class, () -> WebpEncodeOptions.builder().targetPsnr(-1f).build());
+        assertThrows(IllegalArgumentException.class, () -> WebpEncodeOptions.builder().loopCount(-1).build());
     }
 }
