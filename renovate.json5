@@ -1,0 +1,18 @@
+{
+    $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+    extends: [
+        'github>UbiqueInnovation/renovate-config-backend:base.json5',
+    ],
+    "reviewers": [
+        "kistlers",
+        "dsparber"
+    ],
+    packageRules: [
+        {
+            enabled: false,
+            matchPackageNames: [
+                "ch.ubique.signal.relay:ub{/,}**",
+            ],
+        },
+    ],
+}

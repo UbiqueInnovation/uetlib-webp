@@ -197,3 +197,7 @@ Attribution and license details are documented in `src/test/resources/images/ATT
 - Compressed JPEG decode+encode path is implemented through libjpeg-turbo for animation inputs.
 - Compressed PNG decode+encode path is implemented through libpng for animation inputs.
 - Other compatibility formats still fall back to Java `ImageIO`.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md)
