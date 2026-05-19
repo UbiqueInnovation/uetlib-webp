@@ -53,12 +53,44 @@ For end-to-end usage examples see [`docs/USAGE.md`](docs/USAGE.md).
 
 ### Linux x86_64 / macOS arm64
 
-1. Install dependencies (`libwebp`, `libwebpmux`, `libjpeg-turbo`/`libturbojpeg`, `cmake`, C compiler).
-2. Build:
+The native library links against `libwebp`, `libwebpmux`, `libturbojpeg`
+(libjpeg-turbo), and `libpng`, resolved through `pkg-config`.
+
+Build dependencies on Debian/Ubuntu:
+
+```bash
+apt-get install -y \
+  build-essential cmake pkg-config \
+  libwebp-dev libturbojpeg0-dev libpng-dev
+```
+
+`libwebp-dev` ships the `libwebp` and `libwebpmux` pkg-config files. On Ubuntu
+24.04+ the libjpeg-turbo dev package is named `libturbojpeg-dev`.
+
+On macOS (Homebrew):
+
+```bash
+brew install cmake pkg-config webp jpeg-turbo libpng
+```
+
+Build:
 
 ```bash
 ./scripts/build-native.sh
 ```
+
+### Runtime dependencies
+
+Only the shared libraries are needed at runtime. On Debian/Ubuntu:
+
+```bash
+apt-get install -y libwebp7 libwebpmux3 libturbojpeg libpng16-16
+```
+
+Version-suffixed package names vary by distro release (e.g. `libwebp7` →
+`libwebp8`, `libpng16-16` → `libpng16-16t64` on Ubuntu 24.04). The published JAR
+embeds `libuetlib_webp_native.so` for `linux-x86_64` / `linux-aarch64` /
+`macos-aarch64`; the four libraries above must still be installed on the host.
 
 ## Build Java module
 
