@@ -40,3 +40,8 @@ These files are used only for automated tests and come from Wikimedia Commons un
 7. `rapeseed_field.jpg`, `alpine_brook.jpg`, `alpine_lake.jpg`
 - Personal photographs supplied by the project owner for the lossy JPEG → WebP
   size-comparison test. No third-party source.
+
+8. `cmyk_quadrants.jpg`
+- Synthetic 64x64 four-quadrant pattern saved as a 4-component CMYK JPEG
+  (Adobe APP14 transform=0) to exercise the CMYK/YCCK decode path. No
+  third-party source; no copyright attached.
