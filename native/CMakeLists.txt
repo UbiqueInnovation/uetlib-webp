@@ -9,6 +9,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(WEBP REQUIRED IMPORTED_TARGET libwebp)
 pkg_check_modules(WEBPMUX REQUIRED IMPORTED_TARGET libwebpmux)
 pkg_check_modules(TURBOJPEG REQUIRED IMPORTED_TARGET libturbojpeg)
+pkg_check_modules(JPEG REQUIRED IMPORTED_TARGET libjpeg)
 pkg_check_modules(PNG REQUIRED IMPORTED_TARGET libpng)
 
 add_library(uetlib_webp_native SHARED
@@ -25,6 +26,7 @@ target_link_libraries(uetlib_webp_native
         PkgConfig::WEBP
         PkgConfig::WEBPMUX
         PkgConfig::TURBOJPEG
+        PkgConfig::JPEG
         PkgConfig::PNG
 )
 

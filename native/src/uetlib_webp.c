@@ -1,8 +1,11 @@
 #include "uetlib_webp.h"
 
+#include <setjmp.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <jpeglib.h>
 #include <png.h>
 #include <turbojpeg.h>
 #include <webp/decode.h>
@@ -543,6 +546,147 @@ uetlib_webp_status uetlib_webp_encode_still_raw(
     return encode_still_raw_internal(image, options, metadata, out_result);
 }
 
+typedef struct cmyk_jpeg_error_mgr {
+    struct jpeg_error_mgr pub;
+    jmp_buf setjmp_buffer;
+    char message[JMSG_LENGTH_MAX];
+} cmyk_jpeg_error_mgr;
+
+static void cmyk_jpeg_error_exit(j_common_ptr cinfo) {
+    cmyk_jpeg_error_mgr* err = (cmyk_jpeg_error_mgr*)cinfo->err;
+    (*cinfo->err->format_message)(cinfo, err->message);
+    longjmp(err->setjmp_buffer, 1);
+}
+
+/*
+ * Decode a 4-component CMYK/YCCK JPEG into a freshly malloc'd, tightly packed RGB buffer
+ * (width*height*3). The TurboJPEG API cannot convert CMYK/YCCK, so this drops to the base
+ * libjpeg API: libjpeg undoes the YCCK->CMYK transform for us, and we convert CMYK->RGB here.
+ * Adobe-produced files (saw_Adobe_marker) store inverted CMYK samples, which changes the
+ * conversion formula. Returns the buffer (caller frees) or NULL, in which case *out_status is
+ * set and a message is written to errbuf.
+ */
+static uint8_t* decode_cmyk_jpeg_to_rgb(const uint8_t* jpeg, size_t jpeg_size,
+                                        int* out_width, int* out_height,
+                                        uetlib_webp_status* out_status,
+                                        char* errbuf, size_t errbuf_len) {
+    struct jpeg_decompress_struct cinfo;
+    cmyk_jpeg_error_mgr jerr;
+    volatile uint8_t* rgb = NULL;
+    volatile uint8_t* row = NULL;
+
+    cinfo.err = jpeg_std_error(&jerr.pub);
+    jerr.pub.error_exit = cmyk_jpeg_error_exit;
+    jerr.message[0] = '\0';
+
+    if (setjmp(jerr.setjmp_buffer)) {
+        snprintf(errbuf, errbuf_len, "%s", jerr.message[0] ? jerr.message : "JPEG decode error");
+        *out_status = UETLIB_WEBP_STATUS_DECODE_ERROR;
+        free((void*)row);
+        free((void*)rgb);
+        jpeg_destroy_decompress(&cinfo);
+        return NULL;
+    }
+
+    jpeg_create_decompress(&cinfo);
+    jpeg_mem_src(&cinfo, jpeg, (unsigned long)jpeg_size);
+    jpeg_read_header(&cinfo, TRUE);
+
+    if (cinfo.num_components != 4) {
+        snprintf(errbuf, errbuf_len, "Expected 4-component CMYK JPEG, got %d", cinfo.num_components);
+        *out_status = UETLIB_WEBP_STATUS_DECODE_ERROR;
+        jpeg_destroy_decompress(&cinfo);
+        return NULL;
+    }
+
+    cinfo.out_color_space = JCS_CMYK;
+    jpeg_start_decompress(&cinfo);
+
+    int width = (int)cinfo.output_width;
+    int height = (int)cinfo.output_height;
+    if (width <= 0 || height <= 0) {
+        snprintf(errbuf, errbuf_len, "Invalid JPEG dimensions");
+        *out_status = UETLIB_WEBP_STATUS_DECODE_ERROR;
+        jpeg_destroy_decompress(&cinfo);
+        return NULL;
+    }
+    int adobe_inverted = cinfo.saw_Adobe_marker;
+
+    rgb = (volatile uint8_t*)malloc((size_t)width * (size_t)height * 3u);
+    row = (volatile uint8_t*)malloc((size_t)width * 4u);
+    if (rgb == NULL || row == NULL) {
+        snprintf(errbuf, errbuf_len, "Out of memory for JPEG decode buffer");
+        *out_status = UETLIB_WEBP_STATUS_OOM;
+        free((void*)row);
+        free((void*)rgb);
+        jpeg_destroy_decompress(&cinfo);
+        return NULL;
+    }
+
+    while (cinfo.output_scanline < cinfo.output_height) {
+        JSAMPROW rowptr = (JSAMPROW)row;
+        jpeg_read_scanlines(&cinfo, &rowptr, 1);
+        uint8_t* dst = (uint8_t*)rgb + (size_t)(cinfo.output_scanline - 1) * (size_t)width * 3u;
+        for (int x = 0; x < width; x++) {
+            int c = row[x * 4 + 0];
+            int m = row[x * 4 + 1];
+            int y = row[x * 4 + 2];
+            int k = row[x * 4 + 3];
+            if (adobe_inverted) {
+                dst[x * 3 + 0] = (uint8_t)(c * k / 255);
+                dst[x * 3 + 1] = (uint8_t)(m * k / 255);
+                dst[x * 3 + 2] = (uint8_t)(y * k / 255);
+            } else {
+                dst[x * 3 + 0] = (uint8_t)((255 - c) * (255 - k) / 255);
+                dst[x * 3 + 1] = (uint8_t)((255 - m) * (255 - k) / 255);
+                dst[x * 3 + 2] = (uint8_t)((255 - y) * (255 - k) / 255);
+            }
+        }
+    }
+
+    free((void*)row);
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+
+    *out_width = width;
+    *out_height = height;
+    *out_status = UETLIB_WEBP_STATUS_OK;
+    return (uint8_t*)rgb;
+}
+
+/*
+ * Decode JPEG bytes into a tightly packed RGB buffer (width*height*3). Uses the fast TurboJPEG
+ * path for grayscale/RGB/YCbCr, and falls back to libjpeg for CMYK/YCCK which TurboJPEG cannot
+ * convert. width/height/colorspace come from an earlier tjDecompressHeader3 on the same bytes.
+ * Returns the buffer (caller frees) or NULL (sets *out_status and writes errbuf).
+ */
+static uint8_t* jpeg_decode_rgb(tjhandle decompressor, const uint8_t* jpeg, size_t jpeg_size,
+                                int width, int height, int colorspace,
+                                uetlib_webp_status* out_status,
+                                char* errbuf, size_t errbuf_len) {
+    if (colorspace == TJCS_CMYK || colorspace == TJCS_YCCK) {
+        int decoded_width = 0, decoded_height = 0;
+        return decode_cmyk_jpeg_to_rgb(jpeg, jpeg_size, &decoded_width, &decoded_height,
+                                       out_status, errbuf, errbuf_len);
+    }
+
+    uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
+    if (rgb == NULL) {
+        snprintf(errbuf, errbuf_len, "Out of memory for JPEG decode buffer");
+        *out_status = UETLIB_WEBP_STATUS_OOM;
+        return NULL;
+    }
+    if (tjDecompress2(decompressor, jpeg, (unsigned long)jpeg_size, rgb,
+                      width, width * 3, height, TJPF_RGB, 0) != 0) {
+        snprintf(errbuf, errbuf_len, "%s", tjGetErrorStr2(decompressor));
+        free(rgb);
+        *out_status = UETLIB_WEBP_STATUS_DECODE_ERROR;
+        return NULL;
+    }
+    *out_status = UETLIB_WEBP_STATUS_OK;
+    return rgb;
+}
+
 uetlib_webp_status uetlib_webp_encode_still_jpeg(
     const uint8_t* jpeg, size_t jpeg_size,
     const uetlib_webp_encode_options* options,
@@ -579,20 +723,14 @@ uetlib_webp_status uetlib_webp_encode_still_jpeg(
         return UETLIB_WEBP_STATUS_DECODE_ERROR;
     }
 
-    uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
+    uetlib_webp_status decode_status;
+    char decode_error[JMSG_LENGTH_MAX];
+    uint8_t* rgb = jpeg_decode_rgb(decompressor, jpeg, jpeg_size, width, height, jpeg_colorspace,
+                                   &decode_status, decode_error, sizeof(decode_error));
     if (rgb == NULL) {
-        set_error(out_result, UETLIB_WEBP_STATUS_OOM, "Out of memory for JPEG decode buffer");
+        set_error(out_result, decode_status, decode_error);
         tjDestroy(decompressor);
-        return UETLIB_WEBP_STATUS_OOM;
-    }
-
-    if (tjDecompress2(decompressor, jpeg, (unsigned long)jpeg_size, rgb,
-                      width, width * 3, height, TJPF_RGB, 0) != 0) {
-        const char* err = tjGetErrorStr2(decompressor);
-        set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
-        free(rgb);
-        tjDestroy(decompressor);
-        return UETLIB_WEBP_STATUS_DECODE_ERROR;
+        return decode_status;
     }
     tjDestroy(decompressor);
 
@@ -887,22 +1025,15 @@ uetlib_webp_status uetlib_webp_encode_anim_jpegs(
             return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
         }
 
-        uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
+        uetlib_webp_status decode_status;
+        char decode_error[JMSG_LENGTH_MAX];
+        uint8_t* rgb = jpeg_decode_rgb(jpeg, frame->data, frame->size, width, height, colorspace,
+                                       &decode_status, decode_error, sizeof(decode_error));
         if (rgb == NULL) {
             WebPAnimEncoderDelete(encoder);
             tjDestroy(jpeg);
-            set_error(out_result, UETLIB_WEBP_STATUS_OOM, "Out of memory for JPEG decode buffer");
-            return UETLIB_WEBP_STATUS_OOM;
-        }
-
-        if (tjDecompress2(jpeg, frame->data, (unsigned long)frame->size, rgb,
-                          width, width * 3, height, TJPF_RGB, 0) != 0) {
-            free(rgb);
-            WebPAnimEncoderDelete(encoder);
-            const char* err = tjGetErrorStr2(jpeg);
-            tjDestroy(jpeg);
-            set_error(out_result, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
-            return UETLIB_WEBP_STATUS_DECODE_ERROR;
+            set_error(out_result, decode_status, decode_error);
+            return decode_status;
         }
 
         uetlib_webp_raw_image raw;
@@ -1147,17 +1278,13 @@ uetlib_webp_status uetlib_webp_anim_stream_add_jpeg(
         return UETLIB_WEBP_STATUS_INVALID_ARGUMENT;
     }
 
-    uint8_t* rgb = (uint8_t*)malloc((size_t)width * (size_t)height * 3u);
+    uetlib_webp_status decode_status;
+    char decode_error[JMSG_LENGTH_MAX];
+    uint8_t* rgb = jpeg_decode_rgb(stream->jpeg_decoder, jpeg, jpeg_size, width, height, colorspace,
+                                   &decode_status, decode_error, sizeof(decode_error));
     if (rgb == NULL) {
-        set_error(out_error, UETLIB_WEBP_STATUS_OOM, "Out of memory for JPEG decode buffer");
-        return UETLIB_WEBP_STATUS_OOM;
-    }
-    if (tjDecompress2(stream->jpeg_decoder, jpeg, (unsigned long)jpeg_size, rgb,
-                      width, width * 3, height, TJPF_RGB, 0) != 0) {
-        const char* err = tjGetErrorStr2(stream->jpeg_decoder);
-        free(rgb);
-        set_error(out_error, UETLIB_WEBP_STATUS_DECODE_ERROR, err);
-        return UETLIB_WEBP_STATUS_DECODE_ERROR;
+        set_error(out_error, decode_status, decode_error);
+        return decode_status;
     }
 
     uetlib_webp_raw_image raw;

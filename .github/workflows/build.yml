@@ -16,12 +16,12 @@ jobs:
             classifier: linux-x86_64
             install: |
               sudo apt-get update
-              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libpng-dev webp
+              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libjpeg-dev libpng-dev webp
           - os: ubuntu-24.04-arm
             classifier: linux-aarch64
             install: |
               sudo apt-get update
-              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libpng-dev webp
+              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libjpeg-dev libpng-dev webp
           - os: macos-latest
             classifier: macos-aarch64
             install: |
