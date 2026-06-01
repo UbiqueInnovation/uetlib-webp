@@ -104,7 +104,7 @@ jobs:
           parent_pom: pom.xml
 
       - name: Upload JARs
-        uses: UbiqueInnovation/action-systems-mvn-package-deploy@6cf28519519e470139f0c7a6e4b54ed0af4c8fd5 # v1.0.3
+        uses: UbiqueInnovation/action-systems-mvn-package-deploy@647b4e740f14c38ed79fbaa288126cf5465aff67 # v1.1.1
         with:
           parent_pom: pom.xml
           alt_deployment_repository: ubique-artifactory::${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_BACKEND }}
