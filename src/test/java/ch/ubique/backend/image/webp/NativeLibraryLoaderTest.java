@@ -14,12 +14,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 class NativeLibraryLoaderTest {
+
     @Test
     void resolveLibraryNameSupportsLinuxAndMac() throws Exception {
-        Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveLibraryName");
+        final Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveLibraryName");
         resolve.setAccessible(true);
 
-        String previous = System.getProperty("os.name");
+        final String previous = System.getProperty("os.name");
         try {
             System.setProperty("os.name", "Linux");
             assertEquals("uetlib_webp_native", resolve.invoke(null));
@@ -33,14 +34,14 @@ class NativeLibraryLoaderTest {
 
     @Test
     void resolveLibraryNameRejectsUnsupportedOs() throws Exception {
-        Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveLibraryName");
+        final Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveLibraryName");
         resolve.setAccessible(true);
 
-        String previous = System.getProperty("os.name");
+        final String previous = System.getProperty("os.name");
         try {
             System.setProperty("os.name", "Windows 11");
-            Throwable thrown = assertThrows(Throwable.class, () -> resolve.invoke(null));
-            Throwable cause = thrown.getCause() == null ? thrown : thrown.getCause();
+            final Throwable thrown = assertThrows(Throwable.class, () -> resolve.invoke(null));
+            final Throwable cause = thrown.getCause() == null ? thrown : thrown.getCause();
             assertEquals(IllegalStateException.class, cause.getClass());
         } finally {
             restoreProperty("os.name", previous);
@@ -49,11 +50,11 @@ class NativeLibraryLoaderTest {
 
     @Test
     void resolveClassifierProducesExpectedTokens() throws Exception {
-        Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveClassifier");
+        final Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveClassifier");
         resolve.setAccessible(true);
 
-        String previousOs = System.getProperty("os.name");
-        String previousArch = System.getProperty("os.arch");
+        final String previousOs = System.getProperty("os.name");
+        final String previousArch = System.getProperty("os.arch");
         try {
             System.setProperty("os.name", "Mac OS X");
             System.setProperty("os.arch", "aarch64");
@@ -76,16 +77,16 @@ class NativeLibraryLoaderTest {
 
     @Test
     void resolveClassifierRejectsUnsupportedOs() throws Exception {
-        Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveClassifier");
+        final Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveClassifier");
         resolve.setAccessible(true);
 
-        String previousOs = System.getProperty("os.name");
-        String previousArch = System.getProperty("os.arch");
+        final String previousOs = System.getProperty("os.name");
+        final String previousArch = System.getProperty("os.arch");
         try {
             System.setProperty("os.name", "Windows 11");
             System.setProperty("os.arch", "amd64");
-            Throwable thrown = assertThrows(Throwable.class, () -> resolve.invoke(null));
-            Throwable cause = thrown.getCause() == null ? thrown : thrown.getCause();
+            final Throwable thrown = assertThrows(Throwable.class, () -> resolve.invoke(null));
+            final Throwable cause = thrown.getCause() == null ? thrown : thrown.getCause();
             assertEquals(IllegalStateException.class, cause.getClass());
         } finally {
             restoreProperty("os.name", previousOs);
@@ -95,16 +96,16 @@ class NativeLibraryLoaderTest {
 
     @Test
     void resolveClassifierRejectsUnsupportedArch() throws Exception {
-        Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveClassifier");
+        final Method resolve = NativeLibraryLoader.class.getDeclaredMethod("resolveClassifier");
         resolve.setAccessible(true);
 
-        String previousOs = System.getProperty("os.name");
-        String previousArch = System.getProperty("os.arch");
+        final String previousOs = System.getProperty("os.name");
+        final String previousArch = System.getProperty("os.arch");
         try {
             System.setProperty("os.name", "Linux");
             System.setProperty("os.arch", "riscv64");
-            Throwable thrown = assertThrows(Throwable.class, () -> resolve.invoke(null));
-            Throwable cause = thrown.getCause() == null ? thrown : thrown.getCause();
+            final Throwable thrown = assertThrows(Throwable.class, () -> resolve.invoke(null));
+            final Throwable cause = thrown.getCause() == null ? thrown : thrown.getCause();
             assertEquals(IllegalStateException.class, cause.getClass());
         } finally {
             restoreProperty("os.name", previousOs);
@@ -114,44 +115,46 @@ class NativeLibraryLoaderTest {
 
     @Test
     void suffixForReturnsExtension() throws Exception {
-        Method suffixFor = NativeLibraryLoader.class.getDeclaredMethod("suffixFor", String.class);
+        final Method suffixFor =
+                NativeLibraryLoader.class.getDeclaredMethod("suffixFor", String.class);
         suffixFor.setAccessible(true);
 
-        Object suffix = suffixFor.invoke(null, "uetlib_webp_native");
+        final Object suffix = suffixFor.invoke(null, "uetlib_webp_native");
         // .so on linux, .dylib on mac — both start with a dot
-        String s = (String) suffix;
+        final String s = (String) suffix;
         assertEquals('.', s.charAt(0));
     }
 
     @Test
     void suffixForReturnsEmptyWhenNoExtension() throws Exception {
-        Method suffixFor = NativeLibraryLoader.class.getDeclaredMethod("suffixFor", String.class);
+        final Method suffixFor =
+                NativeLibraryLoader.class.getDeclaredMethod("suffixFor", String.class);
         suffixFor.setAccessible(true);
         // Explicitly bypass System.mapLibraryName by passing a synthetic input that maps
         // to a name with no dot. We do this indirectly: the only way mapped has no dot is
         // contrived, so we instead reflect on the conditional via a name with multiple dots
         // and verify the substring is the *last* dot — proving the conditional executes.
-        Object suffix = suffixFor.invoke(null, "uetlib_webp_native");
-        String s = (String) suffix;
+        final Object suffix = suffixFor.invoke(null, "uetlib_webp_native");
+        final String s = (String) suffix;
         assertTrue(s.length() >= 2);
     }
 
     @Test
     void classpathResourcePathBuildsExpectedShape() throws Exception {
-        Method m = NativeLibraryLoader.class.getDeclaredMethod("classpathResourcePath");
+        final Method m = NativeLibraryLoader.class.getDeclaredMethod("classpathResourcePath");
         m.setAccessible(true);
-        String previousOs = System.getProperty("os.name");
-        String previousArch = System.getProperty("os.arch");
+        final String previousOs = System.getProperty("os.name");
+        final String previousArch = System.getProperty("os.arch");
         try {
             System.setProperty("os.name", "Linux");
             System.setProperty("os.arch", "amd64");
-            String actual = (String) m.invoke(null);
+            final String actual = (String) m.invoke(null);
             // System.mapLibraryName is JVM-native and cannot be overridden; allow either
             // platform's extension so the test is stable on both Linux and macOS runners.
             assertTrue(
-                actual.equals("/native/linux-x86_64/libuetlib_webp_native.so")
-                || actual.equals("/native/linux-x86_64/libuetlib_webp_native.dylib"),
-                "unexpected resource path: " + actual);
+                    "/native/linux-x86_64/libuetlib_webp_native.so".equals(actual)
+                            || "/native/linux-x86_64/libuetlib_webp_native.dylib".equals(actual),
+                    "unexpected resource path: " + actual);
         } finally {
             restoreProperty("os.name", previousOs);
             restoreProperty("os.arch", previousArch);
@@ -160,21 +163,25 @@ class NativeLibraryLoaderTest {
 
     @Test
     void extractClasspathResourceReturnsNullWhenAbsent() throws Exception {
-        Method m = NativeLibraryLoader.class.getDeclaredMethod("extractClasspathResource", String.class);
+        final Method m =
+                NativeLibraryLoader.class.getDeclaredMethod(
+                        "extractClasspathResource", String.class);
         m.setAccessible(true);
-        Object result = m.invoke(null, "/native/nonexistent/missing.bin");
+        final Object result = m.invoke(null, "/native/nonexistent/missing.bin");
         assertNull(result);
     }
 
     @Test
     void extractClasspathResourceCopiesPresentResource() throws Exception {
-        Method m = NativeLibraryLoader.class.getDeclaredMethod("extractClasspathResource", String.class);
+        final Method m =
+                NativeLibraryLoader.class.getDeclaredMethod(
+                        "extractClasspathResource", String.class);
         m.setAccessible(true);
-        Object result = m.invoke(null, "/native/test-classifier/stub.bin");
+        final Object result = m.invoke(null, "/native/test-classifier/stub.bin");
         assertNotNull(result);
-        Path extracted = (Path) result;
+        final Path extracted = (Path) result;
         assertTrue(Files.isRegularFile(extracted));
-        String contents = Files.readString(extracted);
+        final String contents = Files.readString(extracted);
         assertTrue(contents.contains("stub-native-library"));
     }
 

@@ -11,12 +11,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Owns one malloc'd, native-encoded WebP byte buffer. Closeable; double-close is safe.
  *
- * <p>Backed by a {@link Cleaner} as a safety net: if a caller forgets {@link #close()}
- * (e.g. drops the reference without try-with-resources), the underlying buffer is still
- * freed when the {@code EncodedWebp} becomes unreachable. The cleanup state intentionally
- * does not hold a strong reference back to the {@code EncodedWebp} itself, so the GC is
- * free to collect promptly. Callers should still close explicitly to release memory at a
- * deterministic point.
+ * <p>Backed by a {@link Cleaner} as a safety net: if a caller forgets {@link #close()} (e.g. drops
+ * the reference without try-with-resources), the underlying buffer is still freed when the {@code
+ * EncodedWebp} becomes unreachable. The cleanup state intentionally does not hold a strong
+ * reference back to the {@code EncodedWebp} itself, so the GC is free to collect promptly. Callers
+ * should still close explicitly to release memory at a deterministic point.
  */
 public final class EncodedWebp implements AutoCloseable {
     private static final Cleaner CLEANER = Cleaner.create();
@@ -52,9 +51,10 @@ public final class EncodedWebp implements AutoCloseable {
     public byte[] toByteArray() {
         ensureOpen();
         if (size > Integer.MAX_VALUE) {
-            throw new IllegalStateException("EncodedWebp exceeds maximum heap byte[] size: " + size);
+            throw new IllegalStateException(
+                    "EncodedWebp exceeds maximum heap byte[] size: " + size);
         }
-        byte[] out = new byte[(int) size];
+        final byte[] out = new byte[(int) size];
         MemorySegment.copy(bytes(), 0, MemorySegment.ofArray(out), 0, size);
         return out;
     }
@@ -75,7 +75,7 @@ public final class EncodedWebp implements AutoCloseable {
         final AtomicBoolean closed = new AtomicBoolean(false);
         private final long dataAddress;
 
-        State(long dataAddress) {
+        State(final long dataAddress) {
             this.dataAddress = dataAddress;
         }
 

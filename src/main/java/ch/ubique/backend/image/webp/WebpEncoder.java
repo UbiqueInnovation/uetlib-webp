@@ -1,8 +1,10 @@
 package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.ffi.NativeWebpLibrary;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Encoder for single-image (still) WebP output.
@@ -42,27 +44,29 @@ public final class WebpEncoder {
             throw new IllegalArgumentException("image must be non-null");
         }
         InputValidator.requireStillOptions(options);
-        return NativeWebpLibrary.encodeStillRaw(image, options, metadata == null ? WebpMetadata.EMPTY : metadata);
+        return NativeWebpLibrary.encodeStillRaw(
+                image, options, metadata == null ? WebpMetadata.EMPTY : metadata);
     }
 
     /**
-     * Decode JPEG bytes natively (libjpeg-turbo) and encode as a still WebP in one C call.
-     * Avoids round-tripping through Java {@code ImageIO} / {@code BufferedImage}.
+     * Decode JPEG bytes natively (libjpeg-turbo) and encode as a still WebP in one C call. Avoids
+     * round-tripping through Java {@code ImageIO} / {@code BufferedImage}.
      *
-     * <p>The supplied {@link MemorySegment} must be readable for the duration of the call;
-     * its contents are decoded inside the native layer.
+     * <p>The supplied {@link MemorySegment} must be readable for the duration of the call; its
+     * contents are decoded inside the native layer.
      */
     public EncodedWebp encodeStillJpeg(
             final MemorySegment jpegBytes,
             final WebpEncodeOptions options,
             final @Nullable WebpMetadata metadata) {
         InputValidator.requireStillOptions(options);
-        return NativeWebpLibrary.encodeStillJpeg(jpegBytes, options, metadata == null ? WebpMetadata.EMPTY : metadata);
+        return NativeWebpLibrary.encodeStillJpeg(
+                jpegBytes, options, metadata == null ? WebpMetadata.EMPTY : metadata);
     }
 
     /**
-     * Convenience overload for callers holding a {@code byte[]}; copies the bytes into a
-     * confined {@link Arena} for the duration of the encode.
+     * Convenience overload for callers holding a {@code byte[]}; copies the bytes into a confined
+     * {@link Arena} for the duration of the encode.
      */
     public EncodedWebp encodeStillJpeg(
             final byte[] jpegBytes, final WebpEncodeOptions options, final @Nullable WebpMetadata metadata) {
@@ -72,8 +76,8 @@ public final class WebpEncoder {
     }
 
     /**
-     * Convenience: decode JPEG bytes and return the WebP bytes as a heap {@code byte[]}.
-     * The native buffer is freed before this method returns.
+     * Convenience: decode JPEG bytes and return the WebP bytes as a heap {@code byte[]}. The native
+     * buffer is freed before this method returns.
      */
     public byte[] encodeStillJpegToBytes(
             final byte[] jpegBytes, final WebpEncodeOptions options, final @Nullable WebpMetadata metadata) {
@@ -88,22 +92,25 @@ public final class WebpEncoder {
             final WebpEncodeOptions options,
             final @Nullable WebpMetadata metadata) {
         InputValidator.requireStillOptions(options);
-        return NativeWebpLibrary.encodeStillPng(pngBytes, options, metadata == null ? WebpMetadata.EMPTY : metadata);
+        return NativeWebpLibrary.encodeStillPng(
+                pngBytes, options, metadata == null ? WebpMetadata.EMPTY : metadata);
     }
 
     /** Convenience overload for callers holding a {@code byte[]}. */
-    public EncodedWebp encodeStillPng(byte[] pngBytes, WebpEncodeOptions options, WebpMetadata metadata) {
-        try (Arena arena = Arena.ofConfined()) {
+    public EncodedWebp encodeStillPng(
+            final byte[] pngBytes, final WebpEncodeOptions options, final WebpMetadata metadata) {
+        try (final Arena arena = Arena.ofConfined()) {
             return encodeStillPng(copyToArena(arena, pngBytes), options, metadata);
         }
     }
 
     /**
-     * Convenience: decode PNG bytes and return the WebP bytes as a heap {@code byte[]}.
-     * The native buffer is freed before this method returns.
+     * Convenience: decode PNG bytes and return the WebP bytes as a heap {@code byte[]}. The native
+     * buffer is freed before this method returns.
      */
-    public byte[] encodeStillPngToBytes(byte[] pngBytes, WebpEncodeOptions options, WebpMetadata metadata) {
-        try (EncodedWebp out = encodeStillPng(pngBytes, options, metadata)) {
+    public byte[] encodeStillPngToBytes(
+            final byte[] pngBytes, final WebpEncodeOptions options, final WebpMetadata metadata) {
+        try (final EncodedWebp out = encodeStillPng(pngBytes, options, metadata)) {
             return out.toByteArray();
         }
     }

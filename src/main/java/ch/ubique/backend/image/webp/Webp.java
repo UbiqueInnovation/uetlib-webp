@@ -1,7 +1,9 @@
 package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.awt.WebpBufferedImageEncoder;
+
 import java.awt.image.BufferedImage;
+import org.jspecify.annotations.Nullable;
 
 /**
  * High-level convenience facade for common still-image conversions.
@@ -10,64 +12,64 @@ import java.awt.image.BufferedImage;
  * {@link WebpEncoder} API available for explicit control.
  */
 public final class Webp {
-    private Webp() {
-    }
+    private Webp() {}
 
     public static Still lossless() {
         return new Still(WebpEncodeOptions.builder().lossless(true).build());
     }
 
-    public static Still lossy(float quality) {
+    public static Still lossy(final float quality) {
         return new Still(WebpEncodeOptions.builder().quality(quality).build());
     }
 
-    public static Still withOptions(WebpEncodeOptions options) {
+    public static Still withOptions(final WebpEncodeOptions options) {
         return new Still(options);
     }
 
     public static final class Still {
         private static final WebpEncoder ENCODER = new WebpEncoder();
-        private static final WebpBufferedImageEncoder BUFFERED_IMAGE_ENCODER = new WebpBufferedImageEncoder(ENCODER);
+        private static final WebpBufferedImageEncoder BUFFERED_IMAGE_ENCODER =
+                new WebpBufferedImageEncoder(ENCODER);
 
         private final WebpEncodeOptions options;
 
-        private Still(WebpEncodeOptions options) {
+        private Still(final WebpEncodeOptions options) {
             if (options == null) {
                 throw new IllegalArgumentException("options must be non-null");
             }
             this.options = options;
         }
 
-        public byte[] encodePng(byte[] pngBytes) {
+        private static WebpMetadata defaultMetadata(final @Nullable WebpMetadata metadata) {
+            return metadata == null ? WebpMetadata.EMPTY : metadata;
+        }
+
+        public byte[] encodePng(final byte[] pngBytes) {
             return encodePng(pngBytes, WebpMetadata.EMPTY);
         }
 
-        public byte[] encodePng(byte[] pngBytes, WebpMetadata metadata) {
+        public byte[] encodePng(final byte[] pngBytes, final WebpMetadata metadata) {
             return ENCODER.encodeStillPngToBytes(pngBytes, options, defaultMetadata(metadata));
         }
 
-        public byte[] encodeJpeg(byte[] jpegBytes) {
+        public byte[] encodeJpeg(final byte[] jpegBytes) {
             return encodeJpeg(jpegBytes, WebpMetadata.EMPTY);
         }
 
-        public byte[] encodeJpeg(byte[] jpegBytes, WebpMetadata metadata) {
+        public byte[] encodeJpeg(final byte[] jpegBytes, final WebpMetadata metadata) {
             return ENCODER.encodeStillJpegToBytes(jpegBytes, options, defaultMetadata(metadata));
         }
 
-        public byte[] encode(BufferedImage image) {
+        public byte[] encode(final BufferedImage image) {
             return encode(image, WebpMetadata.EMPTY);
         }
 
-        public byte[] encode(BufferedImage image, WebpMetadata metadata) {
+        public byte[] encode(final BufferedImage image, final WebpMetadata metadata) {
             return BUFFERED_IMAGE_ENCODER.encode(image, options, defaultMetadata(metadata));
         }
 
         public WebpEncodeOptions options() {
             return options;
-        }
-
-        private static WebpMetadata defaultMetadata(WebpMetadata metadata) {
-            return metadata == null ? WebpMetadata.EMPTY : metadata;
         }
     }
 }

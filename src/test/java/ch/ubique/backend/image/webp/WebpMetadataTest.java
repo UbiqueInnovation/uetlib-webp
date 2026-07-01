@@ -16,9 +16,23 @@ import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("DataFlowIssue")
 class WebpMetadataTest {
+    private static MemorySegment bytes(final Arena arena, final byte[] input) {
+        final MemorySegment out = arena.allocate(input.length);
+        MemorySegment.copy(MemorySegment.ofArray(input), 0, out, 0, input.length);
+        return out;
+    }
+
+    private static byte[] toBytes(final MemorySegment segment) {
+        final byte[] out = new byte[(int) segment.byteSize()];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = segment.get(ValueLayout.JAVA_BYTE, i);
+        }
+        return out;
+    }
+
     @Test
     void nullInputsNormalizeToNullSegments() {
-        WebpMetadata metadata = new WebpMetadata(null, null, null);
+        final WebpMetadata metadata = new WebpMetadata(null, null, null);
         assertEquals(MemorySegment.NULL, metadata.exif());
         assertEquals(MemorySegment.NULL, metadata.iccp());
         assertEquals(MemorySegment.NULL, metadata.xmp());
@@ -26,11 +40,11 @@ class WebpMetadataTest {
 
     @Test
     void explicitSegmentsArePreserved() {
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment exif = bytes(arena, new byte[]{1, 2});
-            MemorySegment iccp = bytes(arena, new byte[]{3, 4, 5});
-            MemorySegment xmp = bytes(arena, new byte[]{6});
-            WebpMetadata metadata = new WebpMetadata(exif, iccp, xmp);
+        try (final Arena arena = Arena.ofConfined()) {
+            final MemorySegment exif = bytes(arena, new byte[] {1, 2});
+            final MemorySegment iccp = bytes(arena, new byte[] {3, 4, 5});
+            final MemorySegment xmp = bytes(arena, new byte[] {6});
+            final WebpMetadata metadata = new WebpMetadata(exif, iccp, xmp);
             assertEquals(exif, metadata.exif());
             assertEquals(iccp, metadata.iccp());
             assertEquals(xmp, metadata.xmp());
@@ -44,9 +58,9 @@ class WebpMetadataTest {
 
     @Test
     void xmpFromStringEncodesUtf8() {
-        String xml = "<?xpacket id=\"a\"?>äöü";
-        WebpMetadata metadata = WebpMetadata.xmp(xml);
-        byte[] expected = xml.getBytes(StandardCharsets.UTF_8);
+        final String xml = "<?xpacket id=\"a\"?>äöü";
+        final WebpMetadata metadata = WebpMetadata.xmp(xml);
+        final byte[] expected = xml.getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(expected, toBytes(metadata.xmp()));
         assertEquals(MemorySegment.NULL, metadata.exif());
         assertEquals(MemorySegment.NULL, metadata.iccp());
@@ -61,8 +75,8 @@ class WebpMetadataTest {
 
     @Test
     void xmpFromBytesWrapsHeapSegment() {
-        byte[] bytes = "hello".getBytes(StandardCharsets.UTF_8);
-        WebpMetadata metadata = WebpMetadata.xmp(bytes);
+        final byte[] bytes = "hello".getBytes(StandardCharsets.UTF_8);
+        final WebpMetadata metadata = WebpMetadata.xmp(bytes);
         assertNotNull(metadata.xmp());
         assertArrayEquals(bytes, toBytes(metadata.xmp()));
         // heap-backed segment, not native
@@ -72,10 +86,10 @@ class WebpMetadataTest {
 
     @Test
     void exifAndIccpFactoriesWrapHeapBytes() {
-        byte[] exif = {1, 2, 3};
-        byte[] iccp = {4, 5};
-        WebpMetadata metaExif = WebpMetadata.exif(exif);
-        WebpMetadata metaIccp = WebpMetadata.iccp(iccp);
+        final byte[] exif = {1, 2, 3};
+        final byte[] iccp = {4, 5};
+        final WebpMetadata metaExif = WebpMetadata.exif(exif);
+        final WebpMetadata metaIccp = WebpMetadata.iccp(iccp);
         assertArrayEquals(exif, toBytes(metaExif.exif()));
         assertEquals(MemorySegment.NULL, metaExif.iccp());
         assertEquals(MemorySegment.NULL, metaExif.xmp());
@@ -96,14 +110,11 @@ class WebpMetadataTest {
 
     @Test
     void builderMixesHeapAndNativeInputs() {
-        try (Arena arena = Arena.ofConfined()) {
-            byte[] exif = {10, 11, 12};
-            MemorySegment iccpSeg = bytes(arena, new byte[]{20, 21});
-            WebpMetadata metadata = WebpMetadata.builder()
-                .exif(exif)
-                .iccp(iccpSeg)
-                .xmp("x")
-                .build();
+        try (final Arena arena = Arena.ofConfined()) {
+            final byte[] exif = {10, 11, 12};
+            final MemorySegment iccpSeg = bytes(arena, new byte[] {20, 21});
+            final WebpMetadata metadata =
+                    WebpMetadata.builder().exif(exif).iccp(iccpSeg).xmp("x").build();
             assertArrayEquals(exif, toBytes(metadata.exif()));
             assertEquals(iccpSeg, metadata.iccp());
             assertArrayEquals("x".getBytes(StandardCharsets.UTF_8), toBytes(metadata.xmp()));
@@ -113,38 +124,26 @@ class WebpMetadataTest {
 
     @Test
     void builderNullInputsAreNormalised() {
-        WebpMetadata metadata = WebpMetadata.builder()
-            .exif((byte[]) null)
-            .iccp((byte[]) null)
-            .xmp((String) null)
-            .build();
+        final WebpMetadata metadata =
+                WebpMetadata.builder()
+                        .exif((byte[]) null)
+                        .iccp((byte[]) null)
+                        .xmp((String) null)
+                        .build();
         assertTrue(metadata.isEmpty());
 
-        WebpMetadata metadataSeg = WebpMetadata.builder()
-            .exif((MemorySegment) null)
-            .iccp((MemorySegment) null)
-            .xmp((MemorySegment) null)
-            .build();
+        final WebpMetadata metadataSeg =
+                WebpMetadata.builder()
+                        .exif((MemorySegment) null)
+                        .iccp((MemorySegment) null)
+                        .xmp((MemorySegment) null)
+                        .build();
         assertTrue(metadataSeg.isEmpty());
     }
 
     @Test
     void builderXmpByteOverloadOnNullOrEmptyYieldsEmptyChunk() {
-        WebpMetadata metadata = WebpMetadata.builder().xmp(new byte[0]).build();
+        final WebpMetadata metadata = WebpMetadata.builder().xmp(new byte[0]).build();
         assertTrue(metadata.isEmpty());
-    }
-
-    private static MemorySegment bytes(Arena arena, byte[] input) {
-        MemorySegment out = arena.allocate(input.length);
-        MemorySegment.copy(MemorySegment.ofArray(input), 0, out, 0, input.length);
-        return out;
-    }
-
-    private static byte[] toBytes(MemorySegment segment) {
-        byte[] out = new byte[(int) segment.byteSize()];
-        for (int i = 0; i < out.length; i++) {
-            out[i] = segment.get(ValueLayout.JAVA_BYTE, i);
-        }
-        return out;
     }
 }

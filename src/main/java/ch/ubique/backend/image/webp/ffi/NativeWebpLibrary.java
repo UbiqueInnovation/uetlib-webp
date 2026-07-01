@@ -36,11 +36,11 @@ import org.jspecify.annotations.Nullable;
 /**
  * Hand-written FFM bridge to the {@code uetlib_webp_native} library.
  *
- * <p>Field accessors are exposed as nested classes — one per C struct — that look like
- * jextract output: each field has a {@code VarHandle} derived from the struct layout
- * via {@link MemoryLayout#varHandle(PathElement...)}, with typed setters/getters that
- * hide the {@code long} offset bookkeeping. Future migration to a real jextract run
- * should be a near-mechanical replacement of these accessor classes.
+ * <p>Field accessors are exposed as nested classes — one per C struct — that look like jextract
+ * output: each field has a {@code VarHandle} derived from the struct layout via {@link
+ * MemoryLayout#varHandle(PathElement...)}, with typed setters/getters that hide the {@code long}
+ * offset bookkeeping. Future migration to a real jextract run should be a near-mechanical
+ * replacement of these accessor classes.
  */
 public final class NativeWebpLibrary {
     private static final Linker LINKER = Linker.nativeLinker();
@@ -63,179 +63,236 @@ public final class NativeWebpLibrary {
     static {
         NativeLibraryLoader.ensureLoaded();
         LOOKUP = SymbolLookup.loaderLookup();
-        ENCODE_STILL_RAW = downcall("uetlib_webp_encode_still_raw",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-        ENCODE_STILL_JPEG = downcall("uetlib_webp_encode_still_jpeg",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_SIZE_T, C_POINTER, C_POINTER, C_POINTER));
-        ENCODE_STILL_PNG = downcall("uetlib_webp_encode_still_png",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_SIZE_T, C_POINTER, C_POINTER, C_POINTER));
-        ENCODE_ANIM_RAW = downcall("uetlib_webp_encode_anim_raw",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-        ENCODE_ANIM_JPEGS = downcall("uetlib_webp_encode_anim_jpegs",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-        ENCODE_ANIM_PNGS = downcall("uetlib_webp_encode_anim_pngs",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-        FREE_BUFFER = downcall("uetlib_webp_free_buffer",
-            FunctionDescriptor.ofVoid(C_POINTER));
-        STREAM_OPEN = downcall("uetlib_webp_anim_stream_open",
-            FunctionDescriptor.of(C_INT, C_INT, C_INT, C_INT, C_POINTER, C_POINTER, C_POINTER));
-        STREAM_ADD_JPEG = downcall("uetlib_webp_anim_stream_add_jpeg",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
-        STREAM_ADD_PNG = downcall("uetlib_webp_anim_stream_add_png",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
-        STREAM_ADD_WEBP = downcall("uetlib_webp_anim_stream_add_webp",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
-        STREAM_FINISH = downcall("uetlib_webp_anim_stream_finish",
-            FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
-        STREAM_ABORT = downcall("uetlib_webp_anim_stream_abort",
-            FunctionDescriptor.ofVoid(C_POINTER));
+        ENCODE_STILL_RAW =
+                downcall(
+                        "uetlib_webp_encode_still_raw",
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
+        ENCODE_STILL_JPEG =
+                downcall(
+                        "uetlib_webp_encode_still_jpeg",
+                        FunctionDescriptor.of(
+                                C_INT, C_POINTER, C_SIZE_T, C_POINTER, C_POINTER, C_POINTER));
+        ENCODE_STILL_PNG =
+                downcall(
+                        "uetlib_webp_encode_still_png",
+                        FunctionDescriptor.of(
+                                C_INT, C_POINTER, C_SIZE_T, C_POINTER, C_POINTER, C_POINTER));
+        ENCODE_ANIM_RAW =
+                downcall(
+                        "uetlib_webp_encode_anim_raw",
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
+        ENCODE_ANIM_JPEGS =
+                downcall(
+                        "uetlib_webp_encode_anim_jpegs",
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
+        ENCODE_ANIM_PNGS =
+                downcall(
+                        "uetlib_webp_encode_anim_pngs",
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
+        FREE_BUFFER = downcall("uetlib_webp_free_buffer", FunctionDescriptor.ofVoid(C_POINTER));
+        STREAM_OPEN =
+                downcall(
+                        "uetlib_webp_anim_stream_open",
+                        FunctionDescriptor.of(
+                                C_INT, C_INT, C_INT, C_INT, C_POINTER, C_POINTER, C_POINTER));
+        STREAM_ADD_JPEG =
+                downcall(
+                        "uetlib_webp_anim_stream_add_jpeg",
+                        FunctionDescriptor.of(
+                                C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
+        STREAM_ADD_PNG =
+                downcall(
+                        "uetlib_webp_anim_stream_add_png",
+                        FunctionDescriptor.of(
+                                C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
+        STREAM_ADD_WEBP =
+                downcall(
+                        "uetlib_webp_anim_stream_add_webp",
+                        FunctionDescriptor.of(
+                                C_INT, C_POINTER, C_POINTER, C_SIZE_T, C_INT, C_POINTER));
+        STREAM_FINISH =
+                downcall(
+                        "uetlib_webp_anim_stream_finish",
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
+        STREAM_ABORT =
+                downcall("uetlib_webp_anim_stream_abort", FunctionDescriptor.ofVoid(C_POINTER));
     }
 
-    private NativeWebpLibrary() {
-    }
+    private NativeWebpLibrary() {}
 
-    public static EncodedWebp encodeStillRaw(WebpRawImage image, WebpEncodeOptions options, WebpMetadata metadata) {
+    public static EncodedWebp encodeStillRaw(
+            final WebpRawImage image,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         try {
-            Arena scope = Arena.ofShared();
-            MemorySegment raw = scope.allocate(RAW_IMAGE);
-            MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            MemorySegment meta = scope.allocate(METADATA);
-            MemorySegment result = scope.allocate(RESULT);
+            final Arena scope = Arena.ofShared();
+            final MemorySegment raw = scope.allocate(RAW_IMAGE);
+            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
+            final MemorySegment meta = scope.allocate(METADATA);
+            final MemorySegment result = scope.allocate(RESULT);
 
             RawImage.fill(raw, image);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            int status = (int) ENCODE_STILL_RAW.invoke(raw, opts, meta, result);
+            final int status = (int) ENCODE_STILL_RAW.invoke(raw, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
 
-    public static EncodedWebp encodeStillJpeg(MemorySegment jpegBytes, WebpEncodeOptions options, WebpMetadata metadata) {
+    public static EncodedWebp encodeStillJpeg(
+            final MemorySegment jpegBytes,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         return encodeStillCompressed(ENCODE_STILL_JPEG, jpegBytes, options, metadata);
     }
 
-    public static EncodedWebp encodeStillPng(MemorySegment pngBytes, WebpEncodeOptions options, WebpMetadata metadata) {
+    public static EncodedWebp encodeStillPng(
+            final MemorySegment pngBytes,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         return encodeStillCompressed(ENCODE_STILL_PNG, pngBytes, options, metadata);
     }
 
-    private static EncodedWebp encodeStillCompressed(MethodHandle handle, MemorySegment compressedBytes,
-                                                     WebpEncodeOptions options, WebpMetadata metadata) {
-        if (compressedBytes == null || compressedBytes.equals(MemorySegment.NULL) || compressedBytes.byteSize() <= 0) {
+    private static EncodedWebp encodeStillCompressed(
+            final MethodHandle handle,
+            final MemorySegment compressedBytes,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
+        if (compressedBytes == null
+                || compressedBytes.equals(MemorySegment.NULL)
+                || compressedBytes.byteSize() <= 0) {
             throw new WebpException("compressed bytes must be non-null and non-empty");
         }
         try {
-            Arena scope = Arena.ofShared();
-            MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            MemorySegment meta = scope.allocate(METADATA);
-            MemorySegment result = scope.allocate(RESULT);
+            final Arena scope = Arena.ofShared();
+            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
+            final MemorySegment meta = scope.allocate(METADATA);
+            final MemorySegment result = scope.allocate(RESULT);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            int status = (int) handle.invoke(compressedBytes, compressedBytes.byteSize(), opts, meta, result);
+            final int status =
+                    (int)
+                            handle.invoke(
+                                    compressedBytes,
+                                    compressedBytes.byteSize(),
+                                    opts,
+                                    meta,
+                                    result);
             return toEncodedOrThrow(status, result, scope);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
 
     public static EncodedWebp encodeAnimRaw(
-        List<WebpFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int bgcolorRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int bgcolorRgba,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         return encodeRawAnimation(
-            ENCODE_ANIM_RAW, frames, canvasWidth, canvasHeight, bgcolorRgba, options, metadata);
+                ENCODE_ANIM_RAW, frames, canvasWidth, canvasHeight, bgcolorRgba, options, metadata);
     }
 
     public static EncodedWebp encodeAnimJpegs(
-        List<WebpCompressedFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int bgcolorRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpCompressedFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int bgcolorRgba,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         return encodeCompressedAnimation(
-            ENCODE_ANIM_JPEGS, frames, canvasWidth, canvasHeight, bgcolorRgba, options, metadata);
+                ENCODE_ANIM_JPEGS,
+                frames,
+                canvasWidth,
+                canvasHeight,
+                bgcolorRgba,
+                options,
+                metadata);
     }
 
     public static EncodedWebp encodeAnimPngs(
-        List<WebpCompressedFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int bgcolorRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpCompressedFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int bgcolorRgba,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         return encodeCompressedAnimation(
-            ENCODE_ANIM_PNGS, frames, canvasWidth, canvasHeight, bgcolorRgba, options, metadata);
+                ENCODE_ANIM_PNGS,
+                frames,
+                canvasWidth,
+                canvasHeight,
+                bgcolorRgba,
+                options,
+                metadata);
     }
 
     private static EncodedWebp encodeRawAnimation(
-        MethodHandle handle,
-        List<WebpFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int bgcolorRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final MethodHandle handle,
+            final List<WebpFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int bgcolorRgba,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         try {
-            Arena scope = Arena.ofShared();
-            MemorySegment frameArray = scope.allocate(ANIM_FRAME, frames.size());
+            final Arena scope = Arena.ofShared();
+            final MemorySegment frameArray = scope.allocate(ANIM_FRAME, frames.size());
             for (int i = 0; i < frames.size(); i++) {
-                AnimFrame.fill(frameArray.asSlice((long) i * ANIM_FRAME.byteSize(), ANIM_FRAME.byteSize()),
-                    frames.get(i));
+                AnimFrame.fill(
+                        frameArray.asSlice(i * ANIM_FRAME.byteSize(), ANIM_FRAME.byteSize()),
+                        frames.get(i));
             }
-            MemorySegment job = scope.allocate(ANIM_JOB);
-            MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            MemorySegment meta = scope.allocate(METADATA);
-            MemorySegment result = scope.allocate(RESULT);
+            final MemorySegment job = scope.allocate(ANIM_JOB);
+            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
+            final MemorySegment meta = scope.allocate(METADATA);
+            final MemorySegment result = scope.allocate(RESULT);
             AnimJob.fill(job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            int status = (int) handle.invoke(job, opts, meta, result);
+            final int status = (int) handle.invoke(job, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
 
     private static EncodedWebp encodeCompressedAnimation(
-        MethodHandle handle,
-        List<WebpCompressedFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int bgcolorRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final MethodHandle handle,
+            final List<WebpCompressedFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int bgcolorRgba,
+            final WebpEncodeOptions options,
+            final WebpMetadata metadata) {
         try {
-            Arena scope = Arena.ofShared();
-            MemorySegment frameArray = scope.allocate(COMPRESSED_FRAME, frames.size());
+            final Arena scope = Arena.ofShared();
+            final MemorySegment frameArray = scope.allocate(COMPRESSED_FRAME, frames.size());
             for (int i = 0; i < frames.size(); i++) {
                 CompressedFrame.fill(
-                    frameArray.asSlice((long) i * COMPRESSED_FRAME.byteSize(), COMPRESSED_FRAME.byteSize()),
-                    frames.get(i));
+                        frameArray.asSlice(
+                                i * COMPRESSED_FRAME.byteSize(), COMPRESSED_FRAME.byteSize()),
+                        frames.get(i));
             }
-            MemorySegment job = scope.allocate(COMPRESSED_ANIM_JOB);
-            MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            MemorySegment meta = scope.allocate(METADATA);
-            MemorySegment result = scope.allocate(RESULT);
-            CompressedAnimJob.fill(job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
+            final MemorySegment job = scope.allocate(COMPRESSED_ANIM_JOB);
+            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
+            final MemorySegment meta = scope.allocate(METADATA);
+            final MemorySegment result = scope.allocate(RESULT);
+            CompressedAnimJob.fill(
+                    job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            int status = (int) handle.invoke(job, opts, meta, result);
+            final int status = (int) handle.invoke(job, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
@@ -243,116 +300,148 @@ public final class NativeWebpLibrary {
     /* ---------- Streaming animation encoder ---------------------------------------------- */
 
     /**
-     * Opens a native streaming animation encoder. Returns the opaque handle address as a
-     * {@code long}; the caller (typically {@code WebpAnimationStream}) is responsible for
-     * eventually calling {@link #streamFinish} or {@link #streamAbort} on it.
+     * Opens a native streaming animation encoder. Returns the opaque handle address as a {@code
+     * long}; the caller (typically {@code WebpAnimationStream}) is responsible for eventually
+     * calling {@link #streamFinish} or {@link #streamAbort} on it.
      */
-    public static long streamOpen(int canvasWidth, int canvasHeight, int bgcolorRgba,
-                                  WebpEncodeOptions options) {
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment opts = arena.allocate(ENCODE_OPTIONS);
-            MemorySegment outStream = arena.allocate(C_POINTER);
-            MemorySegment outErr = arena.allocate(RESULT);
+    public static long streamOpen(
+            final int canvasWidth,
+            final int canvasHeight,
+            final int bgcolorRgba,
+            final WebpEncodeOptions options) {
+        try (final Arena arena = Arena.ofConfined()) {
+            final MemorySegment opts = arena.allocate(ENCODE_OPTIONS);
+            final MemorySegment outStream = arena.allocate(C_POINTER);
+            final MemorySegment outErr = arena.allocate(RESULT);
             EncodeOptions.fill(opts, options);
 
-            int status = (int) STREAM_OPEN.invoke(canvasWidth, canvasHeight, bgcolorRgba,
-                opts, outStream, outErr);
+            final int status =
+                    (int)
+                            STREAM_OPEN.invoke(
+                                    canvasWidth,
+                                    canvasHeight,
+                                    bgcolorRgba,
+                                    opts,
+                                    outStream,
+                                    outErr);
             if (status != 0) {
-                String err = readErrorMessage(outErr);
+                final String err = readErrorMessage(outErr);
                 freeBuffer(Result.errorMessage(outErr).address());
-                throw new WebpException("Failed to open WebP animation stream (status=" + status + "): " + err, status);
+                throw new WebpException(
+                        "Failed to open WebP animation stream (status=" + status + "): " + err,
+                        status);
             }
             // success path may also have set error_message to NULL — defensively free
             freeBuffer(Result.errorMessage(outErr).address());
 
-            MemorySegment handle = outStream.get(C_POINTER, 0L);
+            final MemorySegment handle = outStream.get(C_POINTER, 0L);
             if (handle.equals(MemorySegment.NULL) || handle.address() == 0L) {
                 throw new WebpException("Native stream open returned NULL handle");
             }
             return handle.address();
-        } catch (WebpException e) {
+        } catch (final WebpException e) {
             throw e;
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
 
-    public static void streamAddJpeg(long handleAddress, MemorySegment jpegBytes, int durationMs) {
+    public static void streamAddJpeg(
+            final long handleAddress, final MemorySegment jpegBytes, final int durationMs) {
         streamAddCompressed(STREAM_ADD_JPEG, handleAddress, jpegBytes, durationMs, "JPEG");
     }
 
-    public static void streamAddPng(long handleAddress, MemorySegment pngBytes, int durationMs) {
+    public static void streamAddPng(
+            final long handleAddress, final MemorySegment pngBytes, final int durationMs) {
         streamAddCompressed(STREAM_ADD_PNG, handleAddress, pngBytes, durationMs, "PNG");
     }
 
-    public static void streamAddWebp(long handleAddress, MemorySegment webpBytes, int durationMs) {
+    public static void streamAddWebp(
+            final long handleAddress, final MemorySegment webpBytes, final int durationMs) {
         streamAddCompressed(STREAM_ADD_WEBP, handleAddress, webpBytes, durationMs, "WebP");
     }
 
-    private static void streamAddCompressed(MethodHandle handle, long handleAddress,
-                                            MemorySegment compressedBytes, int durationMs,
-                                            String label) {
+    private static void streamAddCompressed(
+            final MethodHandle handle,
+            final long handleAddress,
+            final MemorySegment compressedBytes,
+            final int durationMs,
+            final String label) {
         if (handleAddress == 0L) {
             throw new WebpException("stream handle is closed");
         }
-        if (compressedBytes == null || compressedBytes.equals(MemorySegment.NULL) || compressedBytes.byteSize() <= 0) {
+        if (compressedBytes == null
+                || compressedBytes.equals(MemorySegment.NULL)
+                || compressedBytes.byteSize() <= 0) {
             throw new WebpException(label + " bytes must be non-null and non-empty");
         }
-        try (Arena arena = Arena.ofConfined()) {
-            MemorySegment outErr = arena.allocate(RESULT);
-            MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
-            int status = (int) handle.invoke(streamPtr, compressedBytes, compressedBytes.byteSize(),
-                durationMs, outErr);
+        try (final Arena arena = Arena.ofConfined()) {
+            final MemorySegment outErr = arena.allocate(RESULT);
+            final MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
+            final int status =
+                    (int)
+                            handle.invoke(
+                                    streamPtr,
+                                    compressedBytes,
+                                    compressedBytes.byteSize(),
+                                    durationMs,
+                                    outErr);
             if (status != 0) {
-                String err = readErrorMessage(outErr);
+                final String err = readErrorMessage(outErr);
                 freeBuffer(Result.errorMessage(outErr).address());
-                throw new WebpException("stream_add_" + label.toLowerCase() + " failed (status="
-                    + status + "): " + err, status);
+                throw new WebpException(
+                        "stream_add_"
+                                + label.toLowerCase()
+                                + " failed (status="
+                                + status
+                                + "): "
+                                + err,
+                        status);
             }
             freeBuffer(Result.errorMessage(outErr).address());
-        } catch (WebpException e) {
+        } catch (final WebpException e) {
             throw e;
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
 
     /**
-     * Finalises a native streaming encoder, returns the assembled WebP buffer as an
-     * {@link EncodedWebp}. The native handle is destroyed regardless of success/failure.
+     * Finalises a native streaming encoder, returns the assembled WebP buffer as an {@link
+     * EncodedWebp}. The native handle is destroyed regardless of success/failure.
      */
     public static EncodedWebp streamFinish(final long handleAddress, final @Nullable WebpMetadata metadata) {
         if (handleAddress == 0L) {
             throw new WebpException("stream handle is closed");
         }
         try {
-            Arena scope = Arena.ofShared();
-            MemorySegment meta = scope.allocate(METADATA);
-            MemorySegment result = scope.allocate(RESULT);
+            final Arena scope = Arena.ofShared();
+            final MemorySegment meta = scope.allocate(METADATA);
+            final MemorySegment result = scope.allocate(RESULT);
             Metadata.fill(meta, metadata == null ? WebpMetadata.EMPTY : metadata, scope);
 
-            MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
-            int status = (int) STREAM_FINISH.invoke(streamPtr, meta, result);
+            final MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
+            final int status = (int) STREAM_FINISH.invoke(streamPtr, meta, result);
             return toEncodedOrThrow(status, result, scope);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
     }
 
     /** Best-effort destruction; never throws. */
-    public static void streamAbort(long handleAddress) {
+    public static void streamAbort(final long handleAddress) {
         if (handleAddress == 0L) {
             return;
         }
         try {
             STREAM_ABORT.invoke(MemorySegment.ofAddress(handleAddress));
-        } catch (Throwable ignored) {
+        } catch (final Throwable ignored) {
             // intentionally swallowed: abort is a cleanup helper.
         }
     }
 
-    private static String readErrorMessage(MemorySegment errResult) {
-        MemorySegment errPtr = Result.errorMessage(errResult);
+    private static String readErrorMessage(final MemorySegment errResult) {
+        final MemorySegment errPtr = Result.errorMessage(errResult);
         if (errPtr.equals(MemorySegment.NULL) || errPtr.address() == 0L) {
             return "Unknown error";
         }
@@ -361,41 +450,46 @@ public final class NativeWebpLibrary {
         return errPtr.reinterpret(Long.MAX_VALUE).getString(0);
     }
 
-    public static void freeBuffer(long address) {
+    public static void freeBuffer(final long address) {
         if (address == 0L) {
             return;
         }
         try {
             FREE_BUFFER.invoke(MemorySegment.ofAddress(address));
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             throw new WebpException("Failed to free native buffer: " + t.getMessage(), t);
         }
     }
 
-    private static WebpException wrapNativeFailure(Throwable t) {
-        if (t instanceof WebpException e) {
+    private static WebpException wrapNativeFailure(final Throwable t) {
+        if (t instanceof final WebpException e) {
             return e;
         }
         return new WebpException("Native call failed: " + t.getMessage(), t);
     }
 
     /**
-     * Drains the native result struct into Java-owned values, immediately frees the
-     * struct's metadata side (error_message), and closes the staging arena. The encoded
-     * data buffer is malloc-owned and lives on inside the returned {@link EncodedWebp}.
+     * Drains the native result struct into Java-owned values, immediately frees the struct's
+     * metadata side (error_message), and closes the staging arena. The encoded data buffer is
+     * malloc-owned and lives on inside the returned {@link EncodedWebp}.
      */
-    private static EncodedWebp toEncodedOrThrow(int status, MemorySegment result, Arena scope) {
+    private static EncodedWebp toEncodedOrThrow(
+            final int status, final MemorySegment result, final Arena scope) {
         try {
-            int resultStatus = Result.status(result);
-            MemorySegment errPtr = Result.errorMessage(result);
-            MemorySegment data = Result.data(result);
-            long size = Result.size(result);
+            final int resultStatus = Result.status(result);
+            final MemorySegment errPtr = Result.errorMessage(result);
+            final MemorySegment data = Result.data(result);
+            final long size = Result.size(result);
 
             if (status != 0 || resultStatus != 0) {
-                String err = errPtr.equals(MemorySegment.NULL) ? "Unknown error" : errPtr.reinterpret(Long.MAX_VALUE).getString(0);
+                final String err =
+                        errPtr.equals(MemorySegment.NULL)
+                                ? "Unknown error"
+                                : errPtr.reinterpret(Long.MAX_VALUE).getString(0);
                 freeBuffer(data.address());
                 freeBuffer(errPtr.address());
-                throw new WebpException("WebP encode failed (status=" + resultStatus + "): " + err, resultStatus);
+                throw new WebpException(
+                        "WebP encode failed (status=" + resultStatus + "): " + err, resultStatus);
             }
 
             freeBuffer(errPtr.address());
@@ -409,9 +503,12 @@ public final class NativeWebpLibrary {
         }
     }
 
-    private static MethodHandle downcall(String symbolName, FunctionDescriptor descriptor) {
-        MemorySegment symbol = LOOKUP.find(symbolName)
-            .orElseThrow(() -> new IllegalStateException("Missing symbol: " + symbolName));
+    private static MethodHandle downcall(
+            final String symbolName, final FunctionDescriptor descriptor) {
+        final MemorySegment symbol =
+                LOOKUP.find(symbolName)
+                        .orElseThrow(
+                                () -> new IllegalStateException("Missing symbol: " + symbolName));
         return LINKER.downcallHandle(symbol, descriptor);
     }
 
@@ -422,7 +519,7 @@ public final class NativeWebpLibrary {
      * field on a fresh allocation".
      * ----------------------------------------------------------------------- */
 
-    private static VarHandle vh(MemoryLayout layout, String field) {
+    private static VarHandle vh(final MemoryLayout layout, final String field) {
         // Outer empty PathElement strips the synthetic leading offset element so the
         // returned handle binds against (segment, offset, value) instead of the
         // (segment, baseOffset, fieldOffset, value) shape.
@@ -450,7 +547,7 @@ public final class NativeWebpLibrary {
 
         private EncodeOptions() {}
 
-        static void fill(MemorySegment segment, WebpEncodeOptions o) {
+        static void fill(final MemorySegment segment, final WebpEncodeOptions o) {
             STRUCT_SIZE.set(segment, 0L, (int) ENCODE_OPTIONS.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
             LOSSLESS.set(segment, 0L, o.lossless() ? 1 : 0);
@@ -481,10 +578,11 @@ public final class NativeWebpLibrary {
 
         private Metadata() {}
 
-        static void fill(MemorySegment segment, WebpMetadata metadata, Arena arena) {
-            MemorySegment exif = toNative(metadata.exif(), arena);
-            MemorySegment iccp = toNative(metadata.iccp(), arena);
-            MemorySegment xmp = toNative(metadata.xmp(), arena);
+        static void fill(
+                final MemorySegment segment, final WebpMetadata metadata, final Arena arena) {
+            final MemorySegment exif = toNative(metadata.exif(), arena);
+            final MemorySegment iccp = toNative(metadata.iccp(), arena);
+            final MemorySegment xmp = toNative(metadata.xmp(), arena);
             EXIF.set(segment, 0L, exif);
             EXIF_SIZE.set(segment, 0L, exif.equals(MemorySegment.NULL) ? 0L : exif.byteSize());
             ICCP.set(segment, 0L, iccp);
@@ -494,9 +592,9 @@ public final class NativeWebpLibrary {
         }
 
         /**
-         * Accepts either an already-native segment (passed through) or a heap-backed segment
-         * from {@link MemorySegment#ofArray(byte[])}; in the latter case the bytes are copied
-         * into {@code arena} and the native-backed copy is returned. This lets {@link WebpMetadata}
+         * Accepts either an already-native segment (passed through) or a heap-backed segment from
+         * {@link MemorySegment#ofArray(byte[])}; in the latter case the bytes are copied into
+         * {@code arena} and the native-backed copy is returned. This lets {@link WebpMetadata}
          * expose heap-friendly static factories without forcing callers to manage an Arena.
          */
         private static MemorySegment toNative(final @Nullable MemorySegment segment, final Arena arena) {
@@ -506,7 +604,7 @@ public final class NativeWebpLibrary {
             if (segment.isNative()) {
                 return segment;
             }
-            MemorySegment copy = arena.allocate(segment.byteSize());
+            final MemorySegment copy = arena.allocate(segment.byteSize());
             MemorySegment.copy(segment, 0L, copy, 0L, segment.byteSize());
             return copy;
         }
@@ -524,7 +622,7 @@ public final class NativeWebpLibrary {
 
         private RawImage() {}
 
-        static void fill(MemorySegment segment, WebpRawImage image) {
+        static void fill(final MemorySegment segment, final WebpRawImage image) {
             STRUCT_SIZE.set(segment, 0L, (int) RAW_IMAGE.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
             PIXELS.set(segment, 0L, image.pixels());
@@ -548,7 +646,7 @@ public final class NativeWebpLibrary {
 
         private AnimFrame() {}
 
-        static void fill(MemorySegment segment, WebpFrame frame) {
+        static void fill(final MemorySegment segment, final WebpFrame frame) {
             STRUCT_SIZE.set(segment, 0L, (int) ANIM_FRAME.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
             PIXELS.set(segment, 0L, frame.pixels());
@@ -572,8 +670,13 @@ public final class NativeWebpLibrary {
 
         private AnimJob() {}
 
-        static void fill(MemorySegment segment, MemorySegment frameArray, int frameCount,
-                         int canvasWidth, int canvasHeight, int bgcolorRgba) {
+        static void fill(
+                final MemorySegment segment,
+                final MemorySegment frameArray,
+                final int frameCount,
+                final int canvasWidth,
+                final int canvasHeight,
+                final int bgcolorRgba) {
             STRUCT_SIZE.set(segment, 0L, (int) ANIM_JOB.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
             FRAMES.set(segment, 0L, frameArray);
@@ -594,7 +697,7 @@ public final class NativeWebpLibrary {
 
         private CompressedFrame() {}
 
-        static void fill(MemorySegment segment, WebpCompressedFrame frame) {
+        static void fill(final MemorySegment segment, final WebpCompressedFrame frame) {
             STRUCT_SIZE.set(segment, 0L, (int) COMPRESSED_FRAME.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
             DATA.set(segment, 0L, frame.data());
@@ -615,8 +718,13 @@ public final class NativeWebpLibrary {
 
         private CompressedAnimJob() {}
 
-        static void fill(MemorySegment segment, MemorySegment frameArray, int frameCount,
-                         int canvasWidth, int canvasHeight, int bgcolorRgba) {
+        static void fill(
+                final MemorySegment segment,
+                final MemorySegment frameArray,
+                final int frameCount,
+                final int canvasWidth,
+                final int canvasHeight,
+                final int bgcolorRgba) {
             STRUCT_SIZE.set(segment, 0L, (int) COMPRESSED_ANIM_JOB.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
             FRAMES.set(segment, 0L, frameArray);
@@ -636,9 +744,20 @@ public final class NativeWebpLibrary {
 
         private Result() {}
 
-        static MemorySegment data(MemorySegment segment) { return (MemorySegment) DATA.get(segment, 0L); }
-        static long size(MemorySegment segment)          { return (long) SIZE.get(segment, 0L); }
-        static int status(MemorySegment segment)         { return (int) STATUS.get(segment, 0L); }
-        static MemorySegment errorMessage(MemorySegment segment) { return (MemorySegment) ERROR_MESSAGE.get(segment, 0L); }
+        static MemorySegment data(final MemorySegment segment) {
+            return (MemorySegment) DATA.get(segment, 0L);
+        }
+
+        static long size(final MemorySegment segment) {
+            return (long) SIZE.get(segment, 0L);
+        }
+
+        static int status(final MemorySegment segment) {
+            return (int) STATUS.get(segment, 0L);
+        }
+
+        static MemorySegment errorMessage(final MemorySegment segment) {
+            return (MemorySegment) ERROR_MESSAGE.get(segment, 0L);
+        }
     }
 }

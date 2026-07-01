@@ -31,12 +31,12 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamJpegFramesProducesAnimatedWebp() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        byte[] webp;
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final byte[] webp;
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             stream.addJpeg(jpeg, 50);
             stream.addJpeg(jpeg, 50);
             stream.addJpeg(jpeg, 50);
@@ -47,13 +47,14 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamPngFramesProducesAnimatedWebp() throws Exception {
-        byte[] png1 = readResourceBytes(PNG_RESOURCE_1);
-        byte[] png2 = readResourceBytes(PNG_RESOURCE_2);
-        int[] dim = readDimensions(png1);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        byte[] webp;
-        try (WebpAnimationStream stream = encoder.openPngStream(
-                dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
+        final byte[] png1 = readResourceBytes(PNG_RESOURCE_1);
+        final byte[] png2 = readResourceBytes(PNG_RESOURCE_2);
+        final int[] dim = readDimensions(png1);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final byte[] webp;
+        try (final WebpAnimationStream stream =
+                encoder.openPngStream(
+                        dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
             stream.addPng(png1, 50);
             stream.addPng(png2, 50);
             webp = stream.finish();
@@ -63,68 +64,73 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamFinishMatchesBatchEncodeForSameInputs() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
 
-        byte[] streamed;
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final byte[] streamed;
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             stream.addJpeg(jpeg, 50);
             stream.addJpeg(jpeg, 50);
             streamed = stream.finish();
         }
 
-        byte[] batched = encoder.encodeJpegFrameBytes(
-            java.util.List.of(
-                new WebpCompressedFrameBytes(jpeg, 50),
-                new WebpCompressedFrameBytes(jpeg, 50)),
-            dim[0], dim[1], 0,
-            WebpEncodeOptions.defaults(),
-            WebpMetadata.EMPTY);
+        final byte[] batched =
+                encoder.encodeJpegFrameBytes(
+                        java.util.List.of(
+                                new WebpCompressedFrameBytes(jpeg, 50),
+                                new WebpCompressedFrameBytes(jpeg, 50)),
+                        dim[0],
+                        dim[1],
+                        0,
+                        WebpEncodeOptions.defaults(),
+                        WebpMetadata.EMPTY);
 
         // Both paths run libwebp with identical config and identical input, so the
         // assembled bytes must be byte-identical.
-        assertArrayEquals(batched, streamed,
-            "streamed output should be byte-identical to batched output");
+        assertArrayEquals(
+                batched, streamed, "streamed output should be byte-identical to batched output");
     }
 
     @Test
     void streamRejectsMixedFrameTypes() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             assertThrows(WebpException.class, () -> stream.addPng(jpeg, 50));
         }
     }
 
     @Test
     void pngStreamRejectsJpegFrames() throws Exception {
-        byte[] png = readResourceBytes(PNG_RESOURCE_1);
-        int[] dim = readDimensions(png);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        try (WebpAnimationStream stream = encoder.openPngStream(
-                dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
+        final byte[] png = readResourceBytes(PNG_RESOURCE_1);
+        final int[] dim = readDimensions(png);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (final WebpAnimationStream stream =
+                encoder.openPngStream(
+                        dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
             assertThrows(WebpException.class, () -> stream.addJpeg(png, 50));
         }
     }
 
     @Test
     void streamRejectsEmptyAndInvalidDuration() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             assertThrows(IllegalArgumentException.class, () -> stream.addJpeg(null, 50));
             assertThrows(IllegalArgumentException.class, () -> stream.addJpeg(new byte[0], 50));
             assertThrows(IllegalArgumentException.class, () -> stream.addJpeg(jpeg, 0));
             assertThrows(IllegalArgumentException.class, () -> stream.addJpeg(jpeg, -1));
         }
-        try (WebpAnimationStream stream = encoder.openPngStream(
-                dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
+        try (final WebpAnimationStream stream =
+                encoder.openPngStream(
+                        dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
             assertThrows(IllegalArgumentException.class, () -> stream.addPng(null, 50));
             assertThrows(IllegalArgumentException.class, () -> stream.addPng(new byte[0], 50));
             assertThrows(IllegalArgumentException.class, () -> stream.addPng(jpeg, 0));
@@ -133,19 +139,20 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamRejectsCorruptFrameBytes() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
         // Garbage bytes — the native decoder should fail and surface a WebpException
         // with a non-zero status, exercising the streamAddCompressed error-path branch.
-        byte[] garbage = new byte[256];
+        final byte[] garbage = new byte[256];
         java.util.Arrays.fill(garbage, (byte) 0xAB);
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             assertThrows(WebpException.class, () -> stream.addJpeg(garbage, 50));
         }
-        try (WebpAnimationStream stream = encoder.openPngStream(
-                dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
+        try (final WebpAnimationStream stream =
+                encoder.openPngStream(
+                        dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
             assertThrows(WebpException.class, () -> stream.addPng(garbage, 50));
         }
     }
@@ -154,9 +161,9 @@ class WebpAnimationStreamNativeTest {
     void streamFinishWithoutFramesFails() throws Exception {
         // Open and immediately finish — no frames added. The native encoder should
         // refuse to produce a WebP, exercising the streamFinish error-path branch.
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        WebpAnimationStream stream =
-            encoder.openJpegStream(64, 64, 0, WebpEncodeOptions.defaults());
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final WebpAnimationStream stream =
+                encoder.openJpegStream(64, 64, 0, WebpEncodeOptions.defaults());
         try {
             assertThrows(WebpException.class, stream::finish);
         } finally {
@@ -166,21 +173,21 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamRejectsFrameDimensionMismatch() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(64, 64, 0, WebpEncodeOptions.defaults())) {
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(64, 64, 0, WebpEncodeOptions.defaults())) {
             assertThrows(WebpException.class, () -> stream.addJpeg(jpeg, 50));
         }
     }
 
     @Test
     void streamRejectsAddAfterFinish() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        WebpAnimationStream stream =
-            encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults());
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults());
         try {
             stream.addJpeg(jpeg, 50);
             stream.addJpeg(jpeg, 50);
@@ -194,11 +201,11 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamCloseWithoutFinishIsSafe() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        try (WebpAnimationStream stream =
-                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (final WebpAnimationStream stream =
+                encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             stream.addJpeg(jpeg, 50);
             // intentionally drop without finish() — close() should abort the native handle
         }
@@ -206,18 +213,20 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamWebpFramesProducesAnimatedWebp() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
         // Produce a still WebP from the JPEG to use as the frame source.
-        WebpEncoder stillEncoder = new WebpEncoder();
-        byte[] stillWebp;
-        try (EncodedWebp encoded = stillEncoder.encodeStillJpeg(jpeg, WebpEncodeOptions.defaults(), WebpMetadata.EMPTY)) {
+        final WebpEncoder stillEncoder = new WebpEncoder();
+        final byte[] stillWebp;
+        try (final EncodedWebp encoded =
+                stillEncoder.encodeStillJpeg(
+                        jpeg, WebpEncodeOptions.defaults(), WebpMetadata.EMPTY)) {
             stillWebp = encoded.toByteArray();
         }
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        byte[] webp;
-        try (WebpAnimationStream stream =
-                 encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final byte[] webp;
+        try (final WebpAnimationStream stream =
+                encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             stream.addWebp(stillWebp, 50);
             stream.addWebp(stillWebp, 50);
             webp = stream.finish(WebpMetadata.EMPTY);
@@ -227,11 +236,11 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void webpStreamRejectsJpegAndPngFrames() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        try (WebpAnimationStream stream =
-                 encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        try (final WebpAnimationStream stream =
+                encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             assertThrows(WebpException.class, () -> stream.addJpeg(jpeg, 50));
             assertThrows(WebpException.class, () -> stream.addPng(jpeg, 50));
         }
@@ -239,41 +248,42 @@ class WebpAnimationStreamNativeTest {
 
     @Test
     void streamWebpRejectsCorruptFrame() throws Exception {
-        byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
-        int[] dim = readDimensions(jpeg);
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        byte[] garbage = new byte[256];
+        final byte[] jpeg = readResourceBytes(JPEG_RESOURCE);
+        final int[] dim = readDimensions(jpeg);
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        final byte[] garbage = new byte[256];
         java.util.Arrays.fill(garbage, (byte) 0xAB);
-        try (WebpAnimationStream stream =
-                 encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
+        try (final WebpAnimationStream stream =
+                encoder.openWebpStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
             assertThrows(WebpException.class, () -> stream.addWebp(garbage, 50));
         }
     }
 
     @Test
     void streamRejectsInvalidArguments() {
-        WebpAnimationEncoder encoder = new WebpAnimationEncoder();
-        assertThrows(IllegalArgumentException.class,
-            () -> encoder.openJpegStream(-1, 64, 0, WebpEncodeOptions.defaults()));
+        final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> encoder.openJpegStream(-1, 64, 0, WebpEncodeOptions.defaults()));
     }
 
-    private static int[] readDimensions(byte[] bytes) throws Exception {
-        BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-        return new int[]{image.getWidth(), image.getHeight()};
+    private static int[] readDimensions(final byte[] bytes) throws Exception {
+        final BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+        return new int[] {image.getWidth(), image.getHeight()};
     }
 
-    private static byte[] readResourceBytes(String resource) throws Exception {
-        try (var in = WebpAnimationStreamNativeTest.class.getResourceAsStream(resource)) {
+    private static byte[] readResourceBytes(final String resource) throws Exception {
+        try (final var in = WebpAnimationStreamNativeTest.class.getResourceAsStream(resource)) {
             assumeTrue(in != null, "Missing resource " + resource);
             return in.readAllBytes();
         }
     }
 
-    private static void assertWebpContainer(byte[] bytes) {
+    private static void assertWebpContainer(final byte[] bytes) {
         assertTrue(bytes.length >= 12);
-        assertArrayEquals(new byte[]{'R', 'I', 'F', 'F'},
-            java.util.Arrays.copyOfRange(bytes, 0, 4));
-        assertArrayEquals(new byte[]{'W', 'E', 'B', 'P'},
-            java.util.Arrays.copyOfRange(bytes, 8, 12));
+        assertArrayEquals(
+                new byte[] {'R', 'I', 'F', 'F'}, java.util.Arrays.copyOfRange(bytes, 0, 4));
+        assertArrayEquals(
+                new byte[] {'W', 'E', 'B', 'P'}, java.util.Arrays.copyOfRange(bytes, 8, 12));
     }
 }

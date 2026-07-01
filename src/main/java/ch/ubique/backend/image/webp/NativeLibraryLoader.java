@@ -37,15 +37,15 @@ public final class NativeLibraryLoader {
             if (loaded) {
                 return;
             }
-            String explicitPath = System.getProperty("uetlib.webp.native.path");
-            Path buildPath =
+            final String explicitPath = System.getProperty("uetlib.webp.native.path");
+            final Path buildPath =
                     Path.of("native", "build", System.mapLibraryName(resolveLibraryName()));
             if (explicitPath != null && !explicitPath.isBlank()) {
                 System.load(explicitPath);
             } else if (Files.isRegularFile(buildPath)) {
                 System.load(buildPath.toAbsolutePath().toString());
             } else {
-                Path extracted = extractClasspathResource(classpathResourcePath());
+                final Path extracted = extractClasspathResource(classpathResourcePath());
                 if (extracted != null) {
                     System.load(extracted.toAbsolutePath().toString());
                 } else {
@@ -61,23 +61,24 @@ public final class NativeLibraryLoader {
     }
 
     @Nullable
-    static Path extractClasspathResource(String resourcePath) {
-        try (InputStream in = NativeLibraryLoader.class.getResourceAsStream(resourcePath)) {
+    static Path extractClasspathResource(final String resourcePath) {
+        try (final InputStream in = NativeLibraryLoader.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
                 return null;
             }
-            Path tempFile = Files.createTempFile("uetlib-webp-", suffixFor(resolveLibraryName()));
+            final Path tempFile =
+                    Files.createTempFile("uetlib-webp-", suffixFor(resolveLibraryName()));
             tempFile.toFile().deleteOnExit();
             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
             return tempFile;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IllegalStateException(
                     "Failed to extract native library from classpath resource " + resourcePath, e);
         }
     }
 
     private static String resolveLibraryName() {
-        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        final String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         if (os.contains("linux") || os.contains("mac")) {
             return "uetlib_webp_native";
         }
@@ -85,9 +86,9 @@ public final class NativeLibraryLoader {
     }
 
     private static String resolveClassifier() {
-        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
-        String osToken;
+        final String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        final String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
+        final String osToken;
         if (os.contains("mac")) {
             osToken = "macos";
         } else if (os.contains("linux")) {
@@ -95,10 +96,10 @@ public final class NativeLibraryLoader {
         } else {
             throw new IllegalStateException("Unsupported OS for native lib: " + os);
         }
-        String archToken;
-        if (arch.equals("aarch64") || arch.equals("arm64")) {
+        final String archToken;
+        if ("aarch64".equals(arch) || "arm64".equals(arch)) {
             archToken = "aarch64";
-        } else if (arch.equals("x86_64") || arch.equals("amd64")) {
+        } else if ("x86_64".equals(arch) || "amd64".equals(arch)) {
             archToken = "x86_64";
         } else {
             throw new IllegalStateException("Unsupported arch for native lib: " + arch);
@@ -106,9 +107,9 @@ public final class NativeLibraryLoader {
         return osToken + "-" + archToken;
     }
 
-    private static String suffixFor(String libName) {
-        String mapped = System.mapLibraryName(libName);
-        int dot = mapped.lastIndexOf('.');
+    private static String suffixFor(final String libName) {
+        final String mapped = System.mapLibraryName(libName);
+        final int dot = mapped.lastIndexOf('.');
         return dot >= 0 ? mapped.substring(dot) : "";
     }
 }
