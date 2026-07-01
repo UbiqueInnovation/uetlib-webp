@@ -1,15 +1,10 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## 0.1.0
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to semantic versioning.
+- Extend `uetlib-parent` to support jspecify nullability annotations.
 
-## Unreleased
-
-- _No unreleased changes._
-
-## [0.0.10] - 2026-05-22
+## 0.0.10
 
 - CMYK/YCCK JPEG decode support. The TurboJPEG API cannot convert 4-component
   CMYK/YCCK, so these are now decoded through the base libjpeg API (Adobe APP14
@@ -20,13 +15,13 @@ and this project adheres to semantic versioning.
   (runtime). `README.md` native-dependency section updated accordingly.
 - Renovate configuration (`renovate.json5`) added.
 
-## [0.0.9] - 2026-05-05
+## 0.0.9
 
 - `Webp` facade: one-line still-image conversions (`Webp.lossy(q)`,
   `Webp.lossless()`, `Webp.withOptions(...)`) over the lower-level
   `WebpEncoder`. `README.md` / `docs/USAGE.md` updated.
 
-## [0.0.8] - 2026-05-05
+## 0.0.8
 
 - `InputValidator` and expanded `WebpEncodeOptions` validation to reject invalid
   arguments at the API boundary.
@@ -35,7 +30,7 @@ and this project adheres to semantic versioning.
 - `WebpPixels` helper added; `WebpEncoder` / `WebpAnimationEncoder` slimmed by
   delegating to shared helpers.
 
-## [0.0.7] - 2026-05-01
+## 0.0.7
 
 - Removed the deprecated compatibility surface (`WebpWriter`, `WebpUtils`,
   `WebpEncodingConfig`, `Frame`, `PartialImage`, `LosslessWebp`, `LossyWebp`,
@@ -43,34 +38,34 @@ and this project adheres to semantic versioning.
 - Added size-comparison tests (`PhotoLossyJpegSizeTest`,
   `SwitzerlandMapLosslessSizeTest`) and their image fixtures.
 
-## [0.0.6] - 2026-04-28
+## 0.0.6
 
 - Build animations directly from pre-encoded WebP frames (native path plus
   `WebpAnimationEncoder` / `WebpAnimationStream` support).
 
-## [0.0.5] - 2026-04-27
+## 0.0.5
 
 - Decode error-handling fix in the native FFI bindings.
 - Added `LanTimelapseComparisonTest`.
 
-## [0.0.4] - 2026-04-23
+## 0.0.4
 
 - Encoding-config fix in the native still-encode path; corresponding
   `WebpEncodeOptions` adjustment.
 
-## [0.0.3] - 2026-04-20
+## 0.0.3
 
 - Streaming animation encoder: incremental frame add over a new native ABI
   (`WebpAnimationStream`, native streaming functions, `NativeWebpLibrary`
   bindings), with native integration test support (`NativeTestSupport`).
 
-## [0.0.2] - 2026-04-17
+## 0.0.2
 
 - Metadata support (`WebpMetadata`: XMP / EXIF / ICC) wired through the encoder.
 - `WebpImages` convenience helpers and `WebpCompressedFrameBytes`.
 - Expanded animation API and high-level / input-validation / metadata tests.
 
-## [0.0.1] - 2026-04-17
+## 0.0.1
 
 - Initial implementation.
 - Native WebP encode library (`native/`, libwebp + libwebpmux + libturbojpeg +
@@ -94,7 +89,8 @@ and this project adheres to semantic versioning.
   classifiers; tag deploys fan-in into a single multi-classifier JAR pushed to
   Artifactory.
 
-[Unreleased]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.10...HEAD
+[Unreleased]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.10...v0.1.0
 [0.0.10]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.7...v0.0.8

@@ -1,5 +1,7 @@
 package ch.ubique.backend.image.webp;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -11,20 +13,21 @@ import java.util.Locale;
  * Resolves and loads the {@code uetlib_webp_native} shared library.
  *
  * <p>Resolution order:
+ *
  * <ol>
- *   <li>{@code -Duetlib.webp.native.path=/abs/path/to/lib} — explicit override.</li>
- *   <li>{@code native/build/lib&lt;name&gt;.&lt;ext&gt;} — local CMake build, used in-tree.</li>
- *   <li>Classpath resource under {@code /native/&lt;os&gt;-&lt;arch&gt;/lib&lt;name&gt;.&lt;ext&gt;}
- *       — the packaged JAR layout. The resource is streamed into a temp file and loaded.</li>
- *   <li>{@link System#loadLibrary(String)} — relies on {@code java.library.path} /
- *       {@code LD_LIBRARY_PATH} / {@code DYLD_LIBRARY_PATH}.</li>
+ *   <li>{@code -Duetlib.webp.native.path=/abs/path/to/lib} — explicit override.
+ *   <li>{@code native/build/lib&lt;name&gt;.&lt;ext&gt;} — local CMake build, used in-tree.
+ *   <li>Classpath resource under {@code
+ *       /native/&lt;os&gt;-&lt;arch&gt;/lib&lt;name&gt;.&lt;ext&gt;} — the packaged JAR layout. The
+ *       resource is streamed into a temp file and loaded.
+ *   <li>{@link System#loadLibrary(String)} — relies on {@code java.library.path} / {@code
+ *       LD_LIBRARY_PATH} / {@code DYLD_LIBRARY_PATH}.
  * </ol>
  */
 public final class NativeLibraryLoader {
     private static volatile boolean loaded;
 
-    private NativeLibraryLoader() {
-    }
+    private NativeLibraryLoader() {}
 
     public static void ensureLoaded() {
         if (loaded) {
@@ -35,7 +38,8 @@ public final class NativeLibraryLoader {
                 return;
             }
             String explicitPath = System.getProperty("uetlib.webp.native.path");
-            Path buildPath = Path.of("native", "build", System.mapLibraryName(resolveLibraryName()));
+            Path buildPath =
+                    Path.of("native", "build", System.mapLibraryName(resolveLibraryName()));
             if (explicitPath != null && !explicitPath.isBlank()) {
                 System.load(explicitPath);
             } else if (Files.isRegularFile(buildPath)) {
@@ -56,6 +60,7 @@ public final class NativeLibraryLoader {
         return "/native/" + resolveClassifier() + "/" + System.mapLibraryName(resolveLibraryName());
     }
 
+    @Nullable
     static Path extractClasspathResource(String resourcePath) {
         try (InputStream in = NativeLibraryLoader.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
@@ -67,7 +72,7 @@ public final class NativeLibraryLoader {
             return tempFile;
         } catch (IOException e) {
             throw new IllegalStateException(
-                "Failed to extract native library from classpath resource " + resourcePath, e);
+                    "Failed to extract native library from classpath resource " + resourcePath, e);
         }
     }
 
