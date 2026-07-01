@@ -21,11 +21,23 @@ import java.lang.foreign.MemorySegment;
  */
 public final class WebpEncoder {
 
+    private static MemorySegment copyToArena(final Arena arena, final byte[] source) {
+        if (source == null || source.length == 0) {
+            throw new IllegalArgumentException("input bytes must be non-null and non-empty");
+        }
+        final MemorySegment target = arena.allocate(source.length);
+        MemorySegment.copy(MemorySegment.ofArray(source), 0, target, 0, source.length);
+        return target;
+    }
+
     /**
      * Encode already-native RGBA pixels. The caller owns {@code image.pixels()} and its backing
      * {@link Arena}; the native layer reads from it during the call only.
      */
-    public EncodedWebp encodeStillRaw(WebpRawImage image, WebpEncodeOptions options, WebpMetadata metadata) {
+    public EncodedWebp encodeStillRaw(
+            final WebpRawImage image,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         if (image == null) {
             throw new IllegalArgumentException("image must be non-null");
         }
@@ -40,7 +52,10 @@ public final class WebpEncoder {
      * <p>The supplied {@link MemorySegment} must be readable for the duration of the call;
      * its contents are decoded inside the native layer.
      */
-    public EncodedWebp encodeStillJpeg(MemorySegment jpegBytes, WebpEncodeOptions options, WebpMetadata metadata) {
+    public EncodedWebp encodeStillJpeg(
+            final MemorySegment jpegBytes,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         InputValidator.requireStillOptions(options);
         return NativeWebpLibrary.encodeStillJpeg(jpegBytes, options, metadata == null ? WebpMetadata.EMPTY : metadata);
     }
@@ -49,8 +64,9 @@ public final class WebpEncoder {
      * Convenience overload for callers holding a {@code byte[]}; copies the bytes into a
      * confined {@link Arena} for the duration of the encode.
      */
-    public EncodedWebp encodeStillJpeg(byte[] jpegBytes, WebpEncodeOptions options, WebpMetadata metadata) {
-        try (Arena arena = Arena.ofConfined()) {
+    public EncodedWebp encodeStillJpeg(
+            final byte[] jpegBytes, final WebpEncodeOptions options, final @Nullable WebpMetadata metadata) {
+        try (final Arena arena = Arena.ofConfined()) {
             return encodeStillJpeg(copyToArena(arena, jpegBytes), options, metadata);
         }
     }
@@ -59,14 +75,18 @@ public final class WebpEncoder {
      * Convenience: decode JPEG bytes and return the WebP bytes as a heap {@code byte[]}.
      * The native buffer is freed before this method returns.
      */
-    public byte[] encodeStillJpegToBytes(byte[] jpegBytes, WebpEncodeOptions options, WebpMetadata metadata) {
-        try (EncodedWebp out = encodeStillJpeg(jpegBytes, options, metadata)) {
+    public byte[] encodeStillJpegToBytes(
+            final byte[] jpegBytes, final WebpEncodeOptions options, final @Nullable WebpMetadata metadata) {
+        try (final EncodedWebp out = encodeStillJpeg(jpegBytes, options, metadata)) {
             return out.toByteArray();
         }
     }
 
     /** Decode PNG bytes natively (libpng) and encode as a still WebP in one C call. */
-    public EncodedWebp encodeStillPng(MemorySegment pngBytes, WebpEncodeOptions options, WebpMetadata metadata) {
+    public EncodedWebp encodeStillPng(
+            final MemorySegment pngBytes,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         InputValidator.requireStillOptions(options);
         return NativeWebpLibrary.encodeStillPng(pngBytes, options, metadata == null ? WebpMetadata.EMPTY : metadata);
     }
@@ -86,14 +106,5 @@ public final class WebpEncoder {
         try (EncodedWebp out = encodeStillPng(pngBytes, options, metadata)) {
             return out.toByteArray();
         }
-    }
-
-    private static MemorySegment copyToArena(Arena arena, byte[] source) {
-        if (source == null || source.length == 0) {
-            throw new IllegalArgumentException("input bytes must be non-null and non-empty");
-        }
-        MemorySegment target = arena.allocate(source.length);
-        MemorySegment.copy(MemorySegment.ofArray(source), 0, target, 0, source.length);
-        return target;
     }
 }

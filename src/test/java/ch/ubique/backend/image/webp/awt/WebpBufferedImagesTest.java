@@ -1,20 +1,23 @@
 package ch.ubique.backend.image.webp.awt;
 
-import ch.ubique.backend.image.webp.PixelFormat;
-import ch.ubique.backend.image.webp.WebpPixels;
-import ch.ubique.backend.image.webp.WebpRawImage;
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import ch.ubique.backend.image.webp.PixelFormat;
+import ch.ubique.backend.image.webp.WebpPixels;
+import ch.ubique.backend.image.webp.WebpRawImage;
+
+import org.junit.jupiter.api.Test;
+
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+
+@SuppressWarnings("DataFlowIssue")
 class WebpBufferedImagesTest {
 
     @Test

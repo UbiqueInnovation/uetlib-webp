@@ -1,5 +1,17 @@
 package ch.ubique.backend.image.webp.ffi;
 
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.ANIM_FRAME;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.ANIM_JOB;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.COMPRESSED_ANIM_JOB;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.COMPRESSED_FRAME;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.C_INT;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.C_POINTER;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.C_SIZE_T;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.ENCODE_OPTIONS;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.METADATA;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.RAW_IMAGE;
+import static ch.ubique.backend.image.webp.ffi.NativeLayouts.RESULT;
+
 import ch.ubique.backend.image.webp.EncodedWebp;
 import ch.ubique.backend.image.webp.NativeLibraryLoader;
 import ch.ubique.backend.image.webp.WebpCompressedFrame;
@@ -8,6 +20,7 @@ import ch.ubique.backend.image.webp.WebpException;
 import ch.ubique.backend.image.webp.WebpFrame;
 import ch.ubique.backend.image.webp.WebpMetadata;
 import ch.ubique.backend.image.webp.WebpRawImage;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
@@ -18,18 +31,7 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.List;
-
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.ANIM_FRAME;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.ANIM_JOB;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.C_INT;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.C_POINTER;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.C_SIZE_T;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.COMPRESSED_ANIM_JOB;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.COMPRESSED_FRAME;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.ENCODE_OPTIONS;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.METADATA;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.RAW_IMAGE;
-import static ch.ubique.backend.image.webp.ffi.NativeLayouts.RESULT;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Hand-written FFM bridge to the {@code uetlib_webp_native} library.
@@ -319,7 +321,7 @@ public final class NativeWebpLibrary {
      * Finalises a native streaming encoder, returns the assembled WebP buffer as an
      * {@link EncodedWebp}. The native handle is destroyed regardless of success/failure.
      */
-    public static EncodedWebp streamFinish(long handleAddress, WebpMetadata metadata) {
+    public static EncodedWebp streamFinish(final long handleAddress, final @Nullable WebpMetadata metadata) {
         if (handleAddress == 0L) {
             throw new WebpException("stream handle is closed");
         }
@@ -497,7 +499,7 @@ public final class NativeWebpLibrary {
          * into {@code arena} and the native-backed copy is returned. This lets {@link WebpMetadata}
          * expose heap-friendly static factories without forcing callers to manage an Arena.
          */
-        private static MemorySegment toNative(MemorySegment segment, Arena arena) {
+        private static MemorySegment toNative(final @Nullable MemorySegment segment, final Arena arena) {
             if (segment == null || segment.equals(MemorySegment.NULL) || segment.byteSize() == 0L) {
                 return MemorySegment.NULL;
             }

@@ -1,15 +1,17 @@
 package ch.ubique.backend.image.webp;
 
-import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 class NativeLibraryLoaderTest {
     @Test
@@ -176,7 +178,7 @@ class NativeLibraryLoaderTest {
         assertTrue(contents.contains("stub-native-library"));
     }
 
-    private static void restoreProperty(String key, String previous) {
+    private static void restoreProperty(final String key, final @Nullable String previous) {
         if (previous == null) {
             System.clearProperty(key);
         } else {

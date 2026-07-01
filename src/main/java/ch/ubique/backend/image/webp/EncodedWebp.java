@@ -1,6 +1,9 @@
 package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.ffi.NativeWebpLibrary;
+
+import org.jspecify.annotations.Nullable;
+
 import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +26,7 @@ public final class EncodedWebp implements AutoCloseable {
     private final State state;
     private final Cleaner.Cleanable cleanable;
 
-    public EncodedWebp(MemorySegment nativeData, long size) {
+    public EncodedWebp(final @Nullable MemorySegment nativeData, final long size) {
         if (nativeData == null || nativeData.equals(MemorySegment.NULL)) {
             throw new IllegalArgumentException("nativeData must be non-null/non-NULL");
         }

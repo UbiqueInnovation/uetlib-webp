@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * (red background, navy land mass) are a best-case for WebP's lossless compressor,
  * so the WebP output is expected to be substantially smaller than the PNG.
  */
+@SuppressWarnings("DataFlowIssue")
 class SwitzerlandMapLosslessSizeTest {
     private static final String PNG_RESOURCE = "/images/switzerland_map.png";
 

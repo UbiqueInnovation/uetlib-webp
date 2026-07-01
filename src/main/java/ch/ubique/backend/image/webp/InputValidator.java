@@ -1,5 +1,7 @@
 package ch.ubique.backend.image.webp;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.foreign.MemorySegment;
 
 final class InputValidator {
@@ -22,7 +24,12 @@ final class InputValidator {
         options.validateAnimation();
     }
 
-    static void requireRawImage(MemorySegment pixels, int width, int height, int stride, PixelFormat pixelFormat) {
+    static void requireRawImage(
+            final MemorySegment pixels,
+            final int width,
+            final int height,
+            final int stride,
+            final @Nullable PixelFormat pixelFormat) {
         requireReadableSegment(pixels, "pixels");
         if (pixelFormat == null) {
             throw new IllegalArgumentException("pixelFormat must be non-null");
@@ -44,7 +51,7 @@ final class InputValidator {
         }
     }
 
-    static void requireReadableSegment(MemorySegment segment, String label) {
+    static void requireReadableSegment(final @Nullable MemorySegment segment, final String label) {
         if (segment == null || segment.equals(MemorySegment.NULL)) {
             throw new IllegalArgumentException(label + " must be non-null/non-NULL");
         }
