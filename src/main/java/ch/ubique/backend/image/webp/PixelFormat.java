@@ -9,7 +9,7 @@ public enum PixelFormat {
     private final int nativeCode;
     private final int bytesPerPixel;
 
-    PixelFormat(int nativeCode) {
+    PixelFormat(final int nativeCode) {
         this.nativeCode = nativeCode;
         this.bytesPerPixel = nativeCode == 1 || nativeCode == 3 ? 4 : 3;
     }

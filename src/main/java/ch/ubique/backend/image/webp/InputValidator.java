@@ -5,21 +5,20 @@ import org.jspecify.annotations.Nullable;
 import java.lang.foreign.MemorySegment;
 
 final class InputValidator {
-    private InputValidator() {
-    }
+    private InputValidator() {}
 
-    static void requireOptions(WebpEncodeOptions options) {
+    static void requireOptions(final @Nullable WebpEncodeOptions options) {
         if (options == null) {
             throw new IllegalArgumentException("options must be non-null");
         }
     }
 
-    static void requireStillOptions(WebpEncodeOptions options) {
+    static void requireStillOptions(final WebpEncodeOptions options) {
         requireOptions(options);
         options.validateStill();
     }
 
-    static void requireAnimationOptions(WebpEncodeOptions options) {
+    static void requireAnimationOptions(final WebpEncodeOptions options) {
         requireOptions(options);
         options.validateAnimation();
     }
@@ -38,16 +37,20 @@ final class InputValidator {
             throw new IllegalArgumentException("width/height/stride must be > 0");
         }
 
-        long minStride = multiplyExact(width, pixelFormat.bytesPerPixel(), "width * bytesPerPixel");
+        final long minStride =
+                multiplyExact(width, pixelFormat.bytesPerPixel(), "width * bytesPerPixel");
         if (stride < minStride) {
             throw new IllegalArgumentException(
-                "stride must be >= width * bytesPerPixel (" + minStride + "), was " + stride);
+                    "stride must be >= width * bytesPerPixel (" + minStride + "), was " + stride);
         }
 
-        long requiredBytes = requiredImageBytes(height, stride);
+        final long requiredBytes = requiredImageBytes(height, stride);
         if (pixels.byteSize() < requiredBytes) {
             throw new IllegalArgumentException(
-                "pixel buffer is too small: requires " + requiredBytes + " bytes but has " + pixels.byteSize());
+                    "pixel buffer is too small: requires "
+                            + requiredBytes
+                            + " bytes but has "
+                            + pixels.byteSize());
         }
     }
 
@@ -60,36 +63,37 @@ final class InputValidator {
         }
     }
 
-    static void requirePositiveDuration(int durationMs, String label) {
+    static void requirePositiveDuration(final int durationMs, final String label) {
         if (durationMs <= 0) {
             throw new IllegalArgumentException(label + " must be > 0");
         }
     }
 
-    static void requirePositiveCanvas(int canvasWidth, int canvasHeight) {
+    static void requirePositiveCanvas(final int canvasWidth, final int canvasHeight) {
         if (canvasWidth <= 0 || canvasHeight <= 0) {
             throw new IllegalArgumentException("canvasWidth/canvasHeight must be > 0");
         }
     }
 
-    static void requireOptionalCanvas(int canvasWidth, int canvasHeight) {
+    static void requireOptionalCanvas(final int canvasWidth, final int canvasHeight) {
         if (canvasWidth < 0 || canvasHeight < 0) {
             throw new IllegalArgumentException("canvasWidth/canvasHeight must be >= 0");
         }
         if ((canvasWidth == 0) != (canvasHeight == 0)) {
-            throw new IllegalArgumentException("canvasWidth and canvasHeight must both be 0 or both be > 0");
+            throw new IllegalArgumentException(
+                    "canvasWidth and canvasHeight must both be 0 or both be > 0");
         }
     }
 
-    static long multiplyExact(long left, long right, String label) {
+    static long multiplyExact(final long left, final long right, final String label) {
         try {
             return Math.multiplyExact(left, right);
-        } catch (ArithmeticException e) {
+        } catch (final ArithmeticException e) {
             throw new IllegalArgumentException("overflow while computing " + label, e);
         }
     }
 
-    private static long requiredImageBytes(int height, int stride) {
+    private static long requiredImageBytes(final int height, final int stride) {
         return multiplyExact(height, stride, "height * stride");
     }
 }
