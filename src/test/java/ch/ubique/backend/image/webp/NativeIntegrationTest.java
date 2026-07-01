@@ -15,12 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
+@SuppressWarnings({"resource", "DataFlowIssue"})
 class NativeIntegrationTest {
     private static final String IMAGE_1 = "/images/fronalpstock_featured.jpg";
     private static final String IMAGE_2 = "/images/apollo17_blue_marble.jpg";

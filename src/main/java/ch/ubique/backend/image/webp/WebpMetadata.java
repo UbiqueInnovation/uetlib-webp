@@ -1,5 +1,7 @@
 package ch.ubique.backend.image.webp;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
@@ -31,49 +33,55 @@ import java.nio.charset.StandardCharsets;
  */
 public record WebpMetadata(MemorySegment exif, MemorySegment iccp, MemorySegment xmp) {
     /** Shared instance representing "no metadata chunks". */
-    public static final WebpMetadata EMPTY = new WebpMetadata(MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL);
+    public static final WebpMetadata EMPTY =
+            new WebpMetadata(MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL);
 
-    public WebpMetadata {
-        exif = exif == null ? MemorySegment.NULL : exif;
-        iccp = iccp == null ? MemorySegment.NULL : iccp;
-        xmp = xmp == null ? MemorySegment.NULL : xmp;
+    public WebpMetadata(
+            @Nullable final MemorySegment exif,
+            @Nullable final MemorySegment iccp,
+            @Nullable final MemorySegment xmp) {
+        this.exif = exif == null ? MemorySegment.NULL : exif;
+        this.iccp = iccp == null ? MemorySegment.NULL : iccp;
+        this.xmp = xmp == null ? MemorySegment.NULL : xmp;
     }
 
     /** EXIF-only metadata from a heap {@code byte[]}. */
-    public static WebpMetadata exif(byte[] exifBytes) {
+    public static WebpMetadata exif(final byte[] exifBytes) {
         return builder().exif(exifBytes).build();
     }
 
     /** ICC profile (ICCP) from a heap {@code byte[]}. */
-    public static WebpMetadata iccp(byte[] iccpBytes) {
+    public static WebpMetadata iccp(final byte[] iccpBytes) {
         return builder().iccp(iccpBytes).build();
     }
 
     /** XMP chunk from a heap {@code byte[]}. */
-    public static WebpMetadata xmp(byte[] xmpBytes) {
+    public static WebpMetadata xmp(final byte[] xmpBytes) {
         return builder().xmp(xmpBytes).build();
     }
 
-    /** XMP chunk from a {@link String}; encoded as UTF-8. Blank/empty input returns {@link #EMPTY}. */
-    public static WebpMetadata xmp(String xmpXml) {
+    /**
+     * XMP chunk from a {@link String}; encoded as UTF-8. Blank/empty input returns {@link #EMPTY}.
+     */
+    public static WebpMetadata xmp(final @Nullable String xmpXml) {
         if (xmpXml == null || xmpXml.isEmpty()) {
             return EMPTY;
         }
         return xmp(xmpXml.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** True if every chunk is empty; the native encoder skips muxing in that case. */
-    public boolean isEmpty() {
-        return isEmpty(exif) && isEmpty(iccp) && isEmpty(xmp);
-    }
-
-    private static boolean isEmpty(MemorySegment segment) {
+    private static boolean isEmpty(final @Nullable MemorySegment segment) {
         return segment == null || segment.equals(MemorySegment.NULL) || segment.byteSize() == 0L;
     }
 
     /** New mutable builder over an initially {@link #EMPTY} metadata object. */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /** True if every chunk is empty; the native encoder skips muxing in that case. */
+    public boolean isEmpty() {
+        return isEmpty(exif) && isEmpty(iccp) && isEmpty(xmp);
     }
 
     /** Builder for mix-and-match EXIF/ICCP/XMP metadata from heap inputs. */
@@ -84,27 +92,7 @@ public record WebpMetadata(MemorySegment exif, MemorySegment iccp, MemorySegment
 
         private Builder() {}
 
-        public Builder exif(byte[] bytes) { this.exif = wrap(bytes); return this; }
-        public Builder iccp(byte[] bytes) { this.iccp = wrap(bytes); return this; }
-        public Builder xmp(byte[] bytes)  { this.xmp  = wrap(bytes); return this; }
-
-        public Builder xmp(String xmpXml) {
-            this.xmp = (xmpXml == null || xmpXml.isEmpty())
-                    ? MemorySegment.NULL
-                    : wrap(xmpXml.getBytes(StandardCharsets.UTF_8));
-            return this;
-        }
-
-        /** Provide an already-allocated EXIF segment (e.g. from a user-managed {@link Arena}). */
-        public Builder exif(MemorySegment segment) { this.exif = nullSafe(segment); return this; }
-        public Builder iccp(MemorySegment segment) { this.iccp = nullSafe(segment); return this; }
-        public Builder xmp(MemorySegment segment)  { this.xmp  = nullSafe(segment); return this; }
-
-        public WebpMetadata build() {
-            return new WebpMetadata(exif, iccp, xmp);
-        }
-
-        private static MemorySegment wrap(byte[] bytes) {
+        private static MemorySegment wrap(final byte @Nullable [] bytes) {
             if (bytes == null || bytes.length == 0) {
                 return MemorySegment.NULL;
             }
@@ -113,7 +101,50 @@ public record WebpMetadata(MemorySegment exif, MemorySegment iccp, MemorySegment
             return MemorySegment.ofArray(bytes);
         }
 
-        private static MemorySegment nullSafe(MemorySegment segment) {
+        public Builder exif(final byte[] bytes) {
+            this.exif = wrap(bytes);
+            return this;
+        }
+
+        public Builder iccp(final byte[] bytes) {
+            this.iccp = wrap(bytes);
+            return this;
+        }
+
+        public Builder xmp(final byte[] bytes) {
+            this.xmp = wrap(bytes);
+            return this;
+        }
+
+        public Builder xmp(final @Nullable String xmpXml) {
+            this.xmp =
+                    (xmpXml == null || xmpXml.isEmpty())
+                            ? MemorySegment.NULL
+                            : wrap(xmpXml.getBytes(StandardCharsets.UTF_8));
+            return this;
+        }
+
+        /** Provide an already-allocated EXIF segment (e.g. from a user-managed {@link Arena}). */
+        public Builder exif(final MemorySegment segment) {
+            this.exif = nullSafe(segment);
+            return this;
+        }
+
+        public Builder iccp(final MemorySegment segment) {
+            this.iccp = nullSafe(segment);
+            return this;
+        }
+
+        public Builder xmp(final MemorySegment segment) {
+            this.xmp = nullSafe(segment);
+            return this;
+        }
+
+        public WebpMetadata build() {
+            return new WebpMetadata(exif, iccp, xmp);
+        }
+
+        private static MemorySegment nullSafe(final @Nullable MemorySegment segment) {
             return segment == null ? MemorySegment.NULL : segment;
         }
     }

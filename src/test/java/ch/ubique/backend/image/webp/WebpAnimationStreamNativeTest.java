@@ -1,23 +1,24 @@
 package ch.ubique.backend.image.webp;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import javax.imageio.ImageIO;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+
+import javax.imageio.ImageIO;
+
 /**
- * Native integration tests for {@link WebpAnimationStream} — the push-style streaming
- * encoder. Equivalent to {@code WebpAnimationEncoder#encodeJpegFrameBytes} but with
- * O(one decoded frame) peak memory rather than O(all frames in memory at once).
+ * Native integration tests for {@link WebpAnimationStream} — the push-style streaming encoder.
+ * Equivalent to {@code WebpAnimationEncoder#encodeJpegFrameBytes} but with O(one decoded frame)
+ * peak memory rather than O(all frames in memory at once).
  */
+@SuppressWarnings("resource")
 class WebpAnimationStreamNativeTest {
     private static final String JPEG_RESOURCE = "/images/fronalpstock_featured.jpg";
     private static final String PNG_RESOURCE_1 = "/images/lossless_animation/frame_001.png";

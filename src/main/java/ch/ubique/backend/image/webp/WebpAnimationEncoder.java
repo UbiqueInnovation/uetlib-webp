@@ -1,10 +1,12 @@
 package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.ffi.NativeWebpLibrary;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Encoder for multi-frame (animated) WebP output.
@@ -12,6 +14,7 @@ import java.util.List;
  * <p>Thread-safe: instances are stateless. Each call allocates its own internal {@link Arena}.
  *
  * <h2>Overload map</h2>
+ *
  * <table>
  * <tr><th>Source</th><th>Frame type</th><th>Entry point</th></tr>
  * <tr><td>Already-native RGBA frames</td><td>{@link WebpFrame}</td>
@@ -31,13 +34,12 @@ public final class WebpAnimationEncoder {
     /* ---------- Raw (RGBA) frames ------------------------------------------------------------ */
 
     public EncodedWebp encodeRawFrames(
-        List<WebpFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int backgroundRgba,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         requireFrames(frames);
         InputValidator.requirePositiveCanvas(canvasWidth, canvasHeight);
         InputValidator.requireAnimationOptions(options);
@@ -54,13 +56,12 @@ public final class WebpAnimationEncoder {
     /* ---------- Compressed (JPEG / PNG) frames ----------------------------------------------- */
 
     public EncodedWebp encodeJpegFrames(
-        List<WebpCompressedFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpCompressedFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int backgroundRgba,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         requireFrames(frames);
         InputValidator.requireOptionalCanvas(canvasWidth, canvasHeight);
         InputValidator.requireAnimationOptions(options);
@@ -70,13 +71,12 @@ public final class WebpAnimationEncoder {
     }
 
     public EncodedWebp encodePngFrames(
-        List<WebpCompressedFrame> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpCompressedFrame> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int backgroundRgba,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         requireFrames(frames);
         InputValidator.requireOptionalCanvas(canvasWidth, canvasHeight);
         InputValidator.requireAnimationOptions(options);
@@ -93,39 +93,36 @@ public final class WebpAnimationEncoder {
      * @param frames ordered list of {@link WebpCompressedFrameBytes} (JPEG bytes + durationMs)
      */
     public byte[] encodeJpegFrameBytes(
-        List<WebpCompressedFrameBytes> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpCompressedFrameBytes> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int backgroundRgba,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         return encodeCompressedBytes(
             frames, canvasWidth, canvasHeight, backgroundRgba, options, metadata, /*png=*/ false);
     }
 
     /** PNG variant of {@link #encodeJpegFrameBytes}. */
     public byte[] encodePngFrameBytes(
-        List<WebpCompressedFrameBytes> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata
-    ) {
+            final List<WebpCompressedFrameBytes> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int backgroundRgba,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
         return encodeCompressedBytes(
             frames, canvasWidth, canvasHeight, backgroundRgba, options, metadata, /*png=*/ true);
     }
 
     private byte[] encodeCompressedBytes(
-        List<WebpCompressedFrameBytes> frames,
-        int canvasWidth,
-        int canvasHeight,
-        int backgroundRgba,
-        WebpEncodeOptions options,
-        WebpMetadata metadata,
-        boolean png
-    ) {
+            final List<WebpCompressedFrameBytes> frames,
+            final int canvasWidth,
+            final int canvasHeight,
+            final int backgroundRgba,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata,
+            final boolean png) {
         requireFrames(frames);
         InputValidator.requireOptionalCanvas(canvasWidth, canvasHeight);
         InputValidator.requireAnimationOptions(options);
