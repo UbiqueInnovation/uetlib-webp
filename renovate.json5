@@ -1,10 +1,10 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-        "github>UbiqueInnovation/renovate-config-backend:base.json5"
+        "github>UbiqueInnovation/uetlib:renovate-base.json5"
     ],
     "reviewers": [
-        "kistlers",
-        "martinalig"
+        "dsparber",
+        "kistlers"
     ]
 }
