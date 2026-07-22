@@ -60,6 +60,15 @@ jobs:
         with:
           parent_pom: pom.xml
 
+      - name: Maven Verify Sonar
+        uses: UbiqueInnovation/action-systems-mvn-verify-sonar@27fb8ea6769575fbdd59cc60764dfda549821db3 # v1.0.2
+        with:
+          ref_name: ${{ github.ref_name }}
+          parent_pom: pom.xml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          sonar_token: ${{ secrets.UBIQUE_SONAR_TOKEN }}
+
+
       - name: Upload native artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
