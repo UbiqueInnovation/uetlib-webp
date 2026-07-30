@@ -547,6 +547,9 @@ public final class NativeWebpLibrary {
 
         private EncodeOptions() {}
 
+        // TODO try to remove suppression
+        //  error-prone throws an unhandled exception in this block
+        @SuppressWarnings("NullAway")
         static void fill(final MemorySegment segment, final WebpEncodeOptions o) {
             STRUCT_SIZE.set(segment, 0L, (int) ENCODE_OPTIONS.byteSize());
             ABI_VERSION.set(segment, 0L, WebpEncodeOptions.ABI_VERSION);
@@ -578,6 +581,9 @@ public final class NativeWebpLibrary {
 
         private Metadata() {}
 
+        // TODO try to remove suppression
+        //  error-prone throws an unhandled exception in this block
+        @SuppressWarnings("NullAway")
         static void fill(
                 final MemorySegment segment, final WebpMetadata metadata, final Arena arena) {
             final MemorySegment exif = toNative(metadata.exif(), arena);
