@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- updated actions to not run tests twice for sonar
+
 ## 0.1.0
 
 - Extend `uetlib-parent` to support jspecify nullability annotations.
