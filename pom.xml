@@ -7,6 +7,7 @@
         <groupId>ch.ubique</groupId>
         <artifactId>uetlib-parent</artifactId>
         <version>2026.07.3</version>
+        <relativePath/>
     </parent>
 
     <artifactId>uetlib-webp</artifactId>
