@@ -30,19 +30,19 @@ public final class WebpBufferedImages {
         if (arena == null) {
             throw new IllegalArgumentException("arena must be non-null");
         }
-        final int width = source.getWidth();
-        final int height = source.getHeight();
+        final var width = source.getWidth();
+        final var height = source.getHeight();
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException(
                     "source has non-positive dimensions: " + width + "x" + height);
         }
-        final long pixelBytes = Math.multiplyExact(width, Math.multiplyExact(height, 4L));
-        final MemorySegment rgba = arena.allocate(pixelBytes, 1L);
+        final var pixelBytes = Math.multiplyExact(width, Math.multiplyExact(height, 4L));
+        final var rgba = arena.allocate(pixelBytes, 1L);
 
-        final int[] argb = source.getRGB(0, 0, width, height, null, 0, width);
-        final byte[] packed = new byte[argb.length * 4];
+        final var argb = source.getRGB(0, 0, width, height, null, 0, width);
+        final var packed = new byte[argb.length * 4];
         for (int i = 0, p = 0; i < argb.length; i++) {
-            final int v = argb[i];
+            final var v = argb[i];
             packed[p] = (byte) (v >> 16);
             p++;
             packed[p] = (byte) (v >> 8);
@@ -61,16 +61,16 @@ public final class WebpBufferedImages {
         if (source == null) {
             throw new IllegalArgumentException("source must be non-null");
         }
-        final int width = source.getWidth();
-        final int height = source.getHeight();
+        final var width = source.getWidth();
+        final var height = source.getHeight();
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException(
                     "source has non-positive dimensions: " + width + "x" + height);
         }
-        final int[] argb = source.getRGB(0, 0, width, height, null, 0, width);
-        final byte[] rgba = new byte[argb.length * 4];
+        final var argb = source.getRGB(0, 0, width, height, null, 0, width);
+        final var rgba = new byte[argb.length * 4];
         for (int i = 0, p = 0; i < argb.length; i++) {
-            final int v = argb[i];
+            final var v = argb[i];
             rgba[p] = (byte) (v >> 16);
             p++;
             rgba[p] = (byte) (v >> 8);

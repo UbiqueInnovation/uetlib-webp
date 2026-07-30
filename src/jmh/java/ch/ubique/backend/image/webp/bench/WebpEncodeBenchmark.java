@@ -105,8 +105,8 @@ public class WebpEncodeBenchmark {
         stillPpm = ppmFromRgba(still, WIDTH, HEIGHT);
         animation = new ArrayList<>();
         animationPpm = new ArrayList<>();
-        for (int i = 0; i < FRAME_COUNT; i++) {
-            final byte[] frame = syntheticRgba(WIDTH, HEIGHT, i);
+        for (var i = 0; i < FRAME_COUNT; i++) {
+            final var frame = syntheticRgba(WIDTH, HEIGHT, i);
             animation.add(frame);
             animationPpm.add(ppmFromRgba(frame, WIDTH, HEIGHT));
         }
@@ -143,11 +143,11 @@ public class WebpEncodeBenchmark {
         loadLosslessAnimationFrames();
 
         directArena = Arena.ofShared();
-        final MemorySegment stillPixels = copyToArena(directArena, still);
+        final var stillPixels = copyToArena(directArena, still);
         directStill = new WebpRawImage(stillPixels, WIDTH, HEIGHT, WIDTH * 4, PixelFormat.RGBA);
 
         directAnimation = new ArrayList<>(animation.size());
-        for (final byte[] frame : animation) {
+        for (final var frame : animation) {
             directAnimation.add(
                     new WebpFrame(
                             copyToArena(directArena, frame),
@@ -159,7 +159,7 @@ public class WebpEncodeBenchmark {
         }
 
         directWebcamAnimation = new ArrayList<>(webcamAnimation.size());
-        for (final byte[] frame : webcamAnimation) {
+        for (final var frame : webcamAnimation) {
             directWebcamAnimation.add(
                     new WebpFrame(
                             copyToArena(directArena, frame),
@@ -171,13 +171,13 @@ public class WebpEncodeBenchmark {
         }
 
         directWebcamJpegAnimation = new ArrayList<>(webcamAnimationJpeg.size());
-        for (final byte[] frame : webcamAnimationJpeg) {
+        for (final var frame : webcamAnimationJpeg) {
             directWebcamJpegAnimation.add(
                     new WebpCompressedFrame(copyToArena(directArena, frame), FRAME_DURATION_MS));
         }
 
         directLosslessAnimation = new ArrayList<>(losslessAnimation.size());
-        for (final byte[] frame : losslessAnimation) {
+        for (final var frame : losslessAnimation) {
             directLosslessAnimation.add(
                     new WebpFrame(
                             copyToArena(directArena, frame),
@@ -200,7 +200,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] nativeStillDirectRgba() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directStillEncoder.encodeStillRaw(directStill, options, WebpMetadata.EMPTY)) {
             return encoded.toByteArray();
         }
@@ -208,7 +208,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] nativeStillDirectRgbaThreaded() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directStillEncoder.encodeStillRaw(
                         directStill, threadedOptions, WebpMetadata.EMPTY)) {
             return encoded.toByteArray();
@@ -217,7 +217,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] nativeAnimDirectRgba() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeRawFrames(
                         directAnimation, WIDTH, HEIGHT, 0, options, WebpMetadata.EMPTY)) {
             return encoded.toByteArray();
@@ -226,7 +226,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] nativeAnimDirectRgbaThreaded() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeRawFrames(
                         directAnimation, WIDTH, HEIGHT, 0, threadedOptions, WebpMetadata.EMPTY)) {
             return encoded.toByteArray();
@@ -235,7 +235,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] webcamNativeAnimDirectRgba() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeRawFrames(
                         directWebcamAnimation,
                         webcamWidth,
@@ -249,7 +249,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] webcamNativeAnimJpegTurbo() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeJpegFrames(
                         directWebcamJpegAnimation,
                         webcamWidth,
@@ -263,7 +263,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] webcamNativeAnimJpegTurboThreaded() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeJpegFrames(
                         directWebcamJpegAnimation,
                         webcamWidth,
@@ -277,11 +277,11 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] cliStillTempFile() throws IOException, InterruptedException {
-        final Path in = Files.createTempFile("webp-bench", ".ppm");
-        final Path out = Files.createTempFile("webp-bench", ".webp");
+        final var in = Files.createTempFile("webp-bench", ".ppm");
+        final var out = Files.createTempFile("webp-bench", ".webp");
         try {
             Files.write(in, stillPpm);
-            final Process process =
+            final var process =
                     new ProcessBuilder(
                                     stillCliPath,
                                     "-quiet",
@@ -291,9 +291,9 @@ public class WebpEncodeBenchmark {
                                     "-o",
                                     out.toString())
                             .start();
-            final int code = process.waitFor();
+            final var code = process.waitFor();
             if (code != 0) {
-                final String stderr =
+                final var stderr =
                         new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
                 throw new IllegalStateException("cwebp failed with code " + code + ": " + stderr);
             }
@@ -322,19 +322,19 @@ public class WebpEncodeBenchmark {
     @Benchmark
     public byte[] webcamStreamCliAnimJpegTempFiles() throws IOException, InterruptedException {
         final List<Path> inputs = new ArrayList<>(WEBCAM_IMAGES.length);
-        final Path out = Files.createTempFile("webp-bench-stream-anim", ".webp");
+        final var out = Files.createTempFile("webp-bench-stream-anim", ".webp");
         try {
-            for (int i = 0; i < WEBCAM_IMAGES.length; i++) {
-                final Path frame =
+            for (var i = 0; i < WEBCAM_IMAGES.length; i++) {
+                final var frame =
                         Files.createTempFile("webp-bench-stream-frame-" + i + "-", ".jpg");
-                try (final InputStream in = openResource(WEBCAM_IMAGES[i])) {
+                try (final var in = openResource(WEBCAM_IMAGES[i])) {
                     Files.copy(in, frame, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
                 inputs.add(frame);
             }
             return encodeAnimationFilesWithImg2Webp(inputs, out, "img2webp webcam stream JPEG");
         } finally {
-            for (final Path input : inputs) {
+            for (final var input : inputs) {
                 Files.deleteIfExists(input);
             }
             Files.deleteIfExists(out);
@@ -344,11 +344,11 @@ public class WebpEncodeBenchmark {
     @Benchmark
     public byte[] webcamStreamNativeImageIoDirectRgba() throws IOException {
         final List<WebpFrame> frames = new ArrayList<>(WEBCAM_IMAGES.length);
-        try (final Arena arena = Arena.ofConfined()) {
-            int width = -1;
-            int height = -1;
-            for (final String imagePath : WEBCAM_IMAGES) {
-                final ImageRgba rgba = decodeImageRgba(readResource(imagePath), imagePath);
+        try (final var arena = Arena.ofConfined()) {
+            var width = -1;
+            var height = -1;
+            for (final var imagePath : WEBCAM_IMAGES) {
+                final var rgba = decodeImageRgba(readResource(imagePath), imagePath);
                 if (width < 0) {
                     width = rgba.width;
                     height = rgba.height;
@@ -365,7 +365,7 @@ public class WebpEncodeBenchmark {
                                 FRAME_DURATION_MS));
             }
 
-            try (final EncodedWebp encoded =
+            try (final var encoded =
                     directAnimationEncoder.encodeRawFrames(
                             frames, width, height, 0, options, WebpMetadata.EMPTY)) {
                 return encoded.toByteArray();
@@ -376,14 +376,14 @@ public class WebpEncodeBenchmark {
     @Benchmark
     public byte[] webcamStreamNativeJpegTurbo() throws IOException {
         final List<WebpCompressedFrame> frames = new ArrayList<>(WEBCAM_IMAGES.length);
-        try (final Arena arena = Arena.ofConfined()) {
-            for (final String imagePath : WEBCAM_IMAGES) {
+        try (final var arena = Arena.ofConfined()) {
+            for (final var imagePath : WEBCAM_IMAGES) {
                 frames.add(
                         new WebpCompressedFrame(
                                 copyToArena(arena, readResource(imagePath)), FRAME_DURATION_MS));
             }
 
-            try (final EncodedWebp encoded =
+            try (final var encoded =
                     directAnimationEncoder.encodeJpegFrames(
                             frames, 0, 0, 0, options, WebpMetadata.EMPTY)) {
                 return encoded.toByteArray();
@@ -403,7 +403,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] losslessPngNativeAnimDirectRgba() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeRawFrames(
                         directLosslessAnimation,
                         losslessWidth,
@@ -417,7 +417,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] losslessPngNativeAnimDirectRgbaThreaded() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeRawFrames(
                         directLosslessAnimation,
                         losslessWidth,
@@ -437,7 +437,7 @@ public class WebpEncodeBenchmark {
 
     @Benchmark
     public byte[] losslessPngNativeAnimDirectRgbaKeyframes() {
-        try (final EncodedWebp encoded =
+        try (final var encoded =
                 directAnimationEncoder.encodeRawFrames(
                         directLosslessAnimation,
                         losslessWidth,
@@ -491,10 +491,10 @@ public class WebpEncodeBenchmark {
             final Integer kmax)
             throws IOException, InterruptedException {
         final List<Path> inputs = new ArrayList<>(frames.size());
-        final Path out = Files.createTempFile("webp-bench-anim", ".webp");
+        final var out = Files.createTempFile("webp-bench-anim", ".webp");
         try {
-            for (int i = 0; i < frames.size(); i++) {
-                final Path frame = Files.createTempFile("webp-bench-frame-" + i + "-", inputSuffix);
+            for (var i = 0; i < frames.size(); i++) {
+                final var frame = Files.createTempFile("webp-bench-frame-" + i + "-", inputSuffix);
                 Files.write(frame, frames.get(i));
                 inputs.add(frame);
             }
@@ -502,7 +502,7 @@ public class WebpEncodeBenchmark {
             return encodeAnimationFilesWithImg2Webp(
                     inputs, out, label, lossless, durationMs, kmin, kmax);
         } finally {
-            for (final Path input : inputs) {
+            for (final var input : inputs) {
                 Files.deleteIfExists(input);
             }
             Files.deleteIfExists(out);
@@ -541,13 +541,13 @@ public class WebpEncodeBenchmark {
             final Integer kmin,
             final Integer kmax)
             throws IOException, InterruptedException {
-        final List<String> command =
+        final var command =
                 buildImg2WebpCommand(
                         animationCliPath, inputs, out, lossless, durationMs, kmin, kmax);
-        final Process process = new ProcessBuilder(command).start();
-        final int code = process.waitFor();
+        final var process = new ProcessBuilder(command).start();
+        final var code = process.waitFor();
         if (code != 0) {
-            final String stderr =
+            final var stderr =
                     new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
             throw new IllegalStateException(label + " failed with code " + code + ": " + stderr);
         }
@@ -560,10 +560,10 @@ public class WebpEncodeBenchmark {
         webcamAnimationJpeg = new ArrayList<>(WEBCAM_IMAGES.length);
         webcamAnimationJpegPaths = new ArrayList<>(WEBCAM_IMAGES.length);
 
-        for (int i = 0; i < WEBCAM_IMAGES.length; i++) {
-            final String imagePath = WEBCAM_IMAGES[i];
-            final byte[] jpeg = readResource(imagePath);
-            final ImageRgba rgba = decodeImageRgba(jpeg, imagePath);
+        for (var i = 0; i < WEBCAM_IMAGES.length; i++) {
+            final var imagePath = WEBCAM_IMAGES[i];
+            final var jpeg = readResource(imagePath);
+            final var rgba = decodeImageRgba(jpeg, imagePath);
             if (webcamAnimation.isEmpty()) {
                 webcamWidth = rgba.width;
                 webcamHeight = rgba.height;
@@ -573,7 +573,7 @@ public class WebpEncodeBenchmark {
             webcamAnimation.add(rgba.pixels);
             webcamAnimationPpm.add(ppmFromRgba(rgba.pixels, rgba.width, rgba.height));
             webcamAnimationJpeg.add(jpeg);
-            final Path path = benchmarkTempDir.resolve("webcam-frame-" + i + ".jpg");
+            final var path = benchmarkTempDir.resolve("webcam-frame-" + i + ".jpg");
             Files.write(path, jpeg);
             webcamAnimationJpegPaths.add(path);
         }
@@ -583,10 +583,10 @@ public class WebpEncodeBenchmark {
         losslessAnimation = new ArrayList<>(LOSSLESS_ANIMATION_PNGS.length);
         losslessAnimationPng = new ArrayList<>(LOSSLESS_ANIMATION_PNGS.length);
         losslessAnimationPngPaths = new ArrayList<>(LOSSLESS_ANIMATION_PNGS.length);
-        for (int i = 0; i < LOSSLESS_ANIMATION_PNGS.length; i++) {
-            final String imagePath = LOSSLESS_ANIMATION_PNGS[i];
-            final byte[] png = readResource(imagePath);
-            final ImageRgba rgba = decodeImageRgba(png, imagePath);
+        for (var i = 0; i < LOSSLESS_ANIMATION_PNGS.length; i++) {
+            final var imagePath = LOSSLESS_ANIMATION_PNGS[i];
+            final var png = readResource(imagePath);
+            final var rgba = decodeImageRgba(png, imagePath);
             if (losslessAnimation.isEmpty()) {
                 losslessWidth = rgba.width;
                 losslessHeight = rgba.height;
@@ -595,7 +595,7 @@ public class WebpEncodeBenchmark {
             }
             losslessAnimation.add(rgba.pixels);
             losslessAnimationPng.add(png);
-            final Path path = benchmarkTempDir.resolve("lossless-frame-" + i + ".png");
+            final var path = benchmarkTempDir.resolve("lossless-frame-" + i + ".png");
             Files.write(path, png);
             losslessAnimationPngPaths.add(path);
         }
@@ -621,7 +621,7 @@ public class WebpEncodeBenchmark {
             command.add("-kmax");
             command.add(Integer.toString(kmax));
         }
-        for (final Path input : inputs) {
+        for (final var input : inputs) {
             command.add("-d");
             command.add(Integer.toString(durationMs));
             command.add(lossless ? "-lossless" : "-lossy");
@@ -635,10 +635,10 @@ public class WebpEncodeBenchmark {
     }
 
     private static byte[] syntheticRgba(final int width, final int height, final int frameIndex) {
-        final byte[] out = new byte[width * height * 4];
-        int p = 0;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        final var out = new byte[width * height * 4];
+        var p = 0;
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
                 out[p] = (byte) ((x + frameIndex * 3) & 0xFF);
                 p++;
                 out[p] = (byte) ((y + frameIndex * 7) & 0xFF);
@@ -653,13 +653,13 @@ public class WebpEncodeBenchmark {
     }
 
     private static byte[] readResource(final String resourcePath) throws IOException {
-        try (final InputStream in = openResource(resourcePath)) {
+        try (final var in = openResource(resourcePath)) {
             return in.readAllBytes();
         }
     }
 
     private static InputStream openResource(final String resourcePath) throws IOException {
-        final InputStream in = WebpEncodeBenchmark.class.getResourceAsStream(resourcePath);
+        final var in = WebpEncodeBenchmark.class.getResourceAsStream(resourcePath);
         if (in == null) {
             throw new IOException("Missing resource: " + resourcePath);
         }
@@ -668,18 +668,18 @@ public class WebpEncodeBenchmark {
 
     private static ImageRgba decodeImageRgba(final byte[] encoded, final String label)
             throws IOException {
-        final BufferedImage image = ImageIO.read(new ByteArrayInputStream(encoded));
+        final var image = ImageIO.read(new ByteArrayInputStream(encoded));
         if (image == null) {
             throw new IOException("Failed to decode image resource: " + label);
         }
 
-        final int width = image.getWidth();
-        final int height = image.getHeight();
-        final byte[] rgba = new byte[width * height * 4];
-        int p = 0;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                final int argb = image.getRGB(x, y);
+        final var width = image.getWidth();
+        final var height = image.getHeight();
+        final var rgba = new byte[width * height * 4];
+        var p = 0;
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                final var argb = image.getRGB(x, y);
                 rgba[p] = (byte) ((argb >> 16) & 0xFF);
                 p++;
                 rgba[p] = (byte) ((argb >> 8) & 0xFF);
@@ -694,13 +694,13 @@ public class WebpEncodeBenchmark {
     }
 
     private static byte[] ppmFromRgba(final byte[] rgba, final int width, final int height) {
-        final byte[] header =
+        final var header =
                 ("P6\n" + width + " " + height + "\n255\n").getBytes(StandardCharsets.US_ASCII);
-        final byte[] out = new byte[header.length + width * height * 3];
+        final var out = new byte[header.length + width * height * 3];
         System.arraycopy(header, 0, out, 0, header.length);
-        int src = 0;
-        int dst = header.length;
-        for (int i = 0; i < width * height; i++) {
+        var src = 0;
+        var dst = header.length;
+        for (var i = 0; i < width * height; i++) {
             out[dst] = rgba[src];
             dst++;
             src++;
@@ -716,7 +716,7 @@ public class WebpEncodeBenchmark {
     }
 
     private static MemorySegment copyToArena(final Arena arena, final byte[] input) {
-        final MemorySegment out = arena.allocate(input.length);
+        final var out = arena.allocate(input.length);
         MemorySegment.copy(MemorySegment.ofArray(input), 0, out, 0, input.length);
         return out;
     }

@@ -2,8 +2,6 @@ package ch.ubique.backend.image.webp.bench;
 
 import java.io.Closeable;
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -56,7 +54,7 @@ final class LegacyCoreWebpAdapter implements Closeable {
     }
 
     private static String resolveClasspath() {
-        String explicit = System.getProperty(CLASSPATH_PROPERTY);
+        var explicit = System.getProperty(CLASSPATH_PROPERTY);
         if (explicit == null || explicit.isBlank()) {
             explicit = System.getenv(CLASSPATH_ENV);
         }
@@ -72,8 +70,7 @@ final class LegacyCoreWebpAdapter implements Closeable {
     private static URL[] urlsFromClasspath(final String classpath)
             throws java.net.MalformedURLException {
         final List<URL> urls = new ArrayList<>();
-        for (final String entry :
-                classpath.split(java.util.regex.Pattern.quote(File.pathSeparator))) {
+        for (final var entry : classpath.split(java.util.regex.Pattern.quote(File.pathSeparator))) {
             if (!entry.isBlank()) {
                 urls.add(Path.of(entry).toUri().toURL());
             }
@@ -83,7 +80,7 @@ final class LegacyCoreWebpAdapter implements Closeable {
 
     byte[] animationFromImagesAsByteArrays(final Collection<byte[]> images, final boolean lossy) {
         try {
-            final Method method =
+            final var method =
                     webpUtilsClass.getMethod(
                             "animationFromImagesAsByteArrays",
                             Collection.class,
@@ -99,13 +96,13 @@ final class LegacyCoreWebpAdapter implements Closeable {
     byte[] writerEncodePaths(final List<Path> framePaths, final boolean lossy) {
         Object writer = null;
         try {
-            final Class<?> configClass =
+            final var configClass =
                     classLoader.loadClass("ch.ubique.backend.image.webp.WebpEncodingConfig");
-            final Constructor<?> constructor = webpWriterClass.getConstructor(configClass);
+            final var constructor = webpWriterClass.getConstructor(configClass);
             writer = constructor.newInstance(lossy ? lossyConfig : losslessConfig);
 
-            final Method encode = webpWriterClass.getMethod("encode", List.class);
-            final Path output = (Path) encode.invoke(writer, framePaths);
+            final var encode = webpWriterClass.getMethod("encode", List.class);
+            final var output = (Path) encode.invoke(writer, framePaths);
             return Files.readAllBytes(output);
         } catch (final ReflectiveOperationException | java.io.IOException e) {
             throw new IllegalStateException(
@@ -127,12 +124,13 @@ final class LegacyCoreWebpAdapter implements Closeable {
     }
 
     private Object createConfig(final boolean lossy) throws ReflectiveOperationException {
-        final Class<?> configClass =
+        final var configClass =
                 classLoader.loadClass("ch.ubique.backend.image.webp.WebpEncodingConfig");
-        final Object builder = configClass.getMethod("builder").invoke(null);
+        final var builder = configClass.getMethod("builder").invoke(null);
 
-        final Class<?> methodClass =
+        final var methodClass =
                 classLoader.loadClass("ch.ubique.backend.image.webp.CompressionMethod");
+        //noinspection unchecked
         final Object m4 =
                 Enum.valueOf((Class<? extends Enum>) methodClass.asSubclass(Enum.class), "M4");
         builder.getClass().getMethod("method", methodClass).invoke(builder, m4);
@@ -142,11 +140,10 @@ final class LegacyCoreWebpAdapter implements Closeable {
                 .invoke(builder, Duration.ofMillis(42));
 
         if (lossy) {
-            final Class<?> qualityClass =
+            final var qualityClass =
                     classLoader.loadClass("ch.ubique.backend.image.webp.WebpQuality");
-            final Class<?> lossyClass =
-                    classLoader.loadClass("ch.ubique.backend.image.webp.LossyWebp");
-            final Object lossyQuality = lossyClass.getConstructor(int.class).newInstance(75);
+            final var lossyClass = classLoader.loadClass("ch.ubique.backend.image.webp.LossyWebp");
+            final var lossyQuality = lossyClass.getConstructor(int.class).newInstance(75);
             builder.getClass().getMethod("quality", qualityClass).invoke(builder, lossyQuality);
         }
 
@@ -170,12 +167,12 @@ final class LegacyCoreWebpAdapter implements Closeable {
         protected Class<?> loadClass(final String name, final boolean resolve)
                 throws ClassNotFoundException {
             synchronized (getClassLoadingLock(name)) {
-                Class<?> loaded = findLoadedClass(name);
+                var loaded = findLoadedClass(name);
                 if (loaded == null && name.startsWith("ch.ubique.backend.")) {
                     try {
                         loaded = findClass(name);
-                    } catch (final ClassNotFoundException ignored) {
-                        loaded = null;
+                    } catch (final ClassNotFoundException _) {
+                        // noop
                     }
                 }
                 if (loaded == null) {

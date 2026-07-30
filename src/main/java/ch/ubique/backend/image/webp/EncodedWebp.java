@@ -54,7 +54,7 @@ public final class EncodedWebp implements AutoCloseable {
             throw new IllegalStateException(
                     "EncodedWebp exceeds maximum heap byte[] size: " + size);
         }
-        final byte[] out = new byte[(int) size];
+        final var out = new byte[(int) size];
         MemorySegment.copy(bytes(), 0, MemorySegment.ofArray(out), 0, size);
         return out;
     }

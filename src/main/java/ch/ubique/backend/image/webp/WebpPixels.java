@@ -15,12 +15,12 @@ public final class WebpPixels {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException("width/height must be > 0");
         }
-        final long size =
+        final var size =
                 InputValidator.multiplyExact(
                         width,
                         InputValidator.multiplyExact(height, 4L, "height * 4"),
                         "width * height * 4");
-        final MemorySegment segment = arena.allocate(size, 1L);
+        final var segment = arena.allocate(size, 1L);
         segment.fill((byte) 0);
         return segment;
     }

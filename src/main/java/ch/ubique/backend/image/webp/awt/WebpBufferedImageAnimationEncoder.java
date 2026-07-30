@@ -1,11 +1,9 @@
 package ch.ubique.backend.image.webp.awt;
 
-import ch.ubique.backend.image.webp.EncodedWebp;
 import ch.ubique.backend.image.webp.WebpAnimationEncoder;
 import ch.ubique.backend.image.webp.WebpEncodeOptions;
 import ch.ubique.backend.image.webp.WebpFrame;
 import ch.ubique.backend.image.webp.WebpMetadata;
-import ch.ubique.backend.image.webp.WebpRawImage;
 
 import java.awt.image.BufferedImage;
 import java.lang.foreign.Arena;
@@ -45,16 +43,16 @@ public final class WebpBufferedImageAnimationEncoder {
             throw new IllegalArgumentException(
                     "durationsMs must be non-null and match images in size");
         }
-        try (final Arena arena = Arena.ofShared()) {
+        try (final var arena = Arena.ofShared()) {
             final List<WebpFrame> frames = new ArrayList<>(images.size());
-            for (int i = 0; i < images.size(); i++) {
-                final BufferedImage img = images.get(i);
-                final Integer dur = durationsMs.get(i);
+            for (var i = 0; i < images.size(); i++) {
+                final var img = images.get(i);
+                final var dur = durationsMs.get(i);
                 if (dur == null || dur <= 0) {
                     throw new IllegalArgumentException(
                             "durationsMs[" + i + "] must be > 0 (was " + dur + ")");
                 }
-                final WebpRawImage raw = WebpBufferedImages.toRawImage(img, arena);
+                final var raw = WebpBufferedImages.toRawImage(img, arena);
                 frames.add(
                         new WebpFrame(
                                 raw.pixels(),
@@ -64,7 +62,7 @@ public final class WebpBufferedImageAnimationEncoder {
                                 raw.pixelFormat(),
                                 dur));
             }
-            try (final EncodedWebp out =
+            try (final var out =
                     delegate.encodeRawFrames(
                             frames, canvasWidth, canvasHeight, backgroundRgba, options, metadata)) {
                 return out.toByteArray();

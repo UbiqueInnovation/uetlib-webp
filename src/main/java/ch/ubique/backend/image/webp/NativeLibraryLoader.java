@@ -3,7 +3,6 @@ package ch.ubique.backend.image.webp;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -37,15 +36,15 @@ public final class NativeLibraryLoader {
             if (loaded) {
                 return;
             }
-            final String explicitPath = System.getProperty("uetlib.webp.native.path");
-            final Path buildPath =
+            final var explicitPath = System.getProperty("uetlib.webp.native.path");
+            final var buildPath =
                     Path.of("native", "build", System.mapLibraryName(resolveLibraryName()));
             if (explicitPath != null && !explicitPath.isBlank()) {
                 System.load(explicitPath);
             } else if (Files.isRegularFile(buildPath)) {
                 System.load(buildPath.toAbsolutePath().toString());
             } else {
-                final Path extracted = extractClasspathResource(classpathResourcePath());
+                final var extracted = extractClasspathResource(classpathResourcePath());
                 if (extracted != null) {
                     System.load(extracted.toAbsolutePath().toString());
                 } else {
@@ -62,11 +61,11 @@ public final class NativeLibraryLoader {
 
     @Nullable
     static Path extractClasspathResource(final String resourcePath) {
-        try (final InputStream in = NativeLibraryLoader.class.getResourceAsStream(resourcePath)) {
+        try (final var in = NativeLibraryLoader.class.getResourceAsStream(resourcePath)) {
             if (in == null) {
                 return null;
             }
-            final Path tempFile =
+            final var tempFile =
                     Files.createTempFile("uetlib-webp-", suffixFor(resolveLibraryName()));
             tempFile.toFile().deleteOnExit();
             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
@@ -78,7 +77,7 @@ public final class NativeLibraryLoader {
     }
 
     private static String resolveLibraryName() {
-        final String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        final var os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         if (os.contains("linux") || os.contains("mac")) {
             return "uetlib_webp_native";
         }
@@ -86,8 +85,8 @@ public final class NativeLibraryLoader {
     }
 
     private static String resolveClassifier() {
-        final String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        final String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
+        final var os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        final var arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
         final String osToken;
         if (os.contains("mac")) {
             osToken = "macos";
@@ -108,8 +107,8 @@ public final class NativeLibraryLoader {
     }
 
     private static String suffixFor(final String libName) {
-        final String mapped = System.mapLibraryName(libName);
-        final int dot = mapped.lastIndexOf('.');
+        final var mapped = System.mapLibraryName(libName);
+        final var dot = mapped.lastIndexOf('.');
         return dot >= 0 ? mapped.substring(dot) : "";
     }
 }
