@@ -56,7 +56,7 @@ public final class WebpAnimationStream implements AutoCloseable {
             final int bgcolorRgba,
             final WebpEncodeOptions options,
             final FrameFormat format) {
-        final long handle =
+        final var handle =
                 NativeWebpLibrary.streamOpen(canvasWidth, canvasHeight, bgcolorRgba, options);
         this.state = new State(handle);
         this.cleanable = CLEANER.register(this, state);
@@ -89,7 +89,7 @@ public final class WebpAnimationStream implements AutoCloseable {
     }
 
     private void addCompressed(final byte[] data, final int durationMs, final FrameFormat fmt) {
-        final long h = state.handle.get();
+        final var h = state.handle.get();
         if (h == 0L) {
             throw new IllegalStateException("WebpAnimationStream is closed");
         }
@@ -99,8 +99,8 @@ public final class WebpAnimationStream implements AutoCloseable {
         if (durationMs <= 0) {
             throw new IllegalArgumentException("durationMs must be > 0");
         }
-        try (final Arena arena = Arena.ofConfined()) {
-            final MemorySegment seg = arena.allocate(data.length);
+        try (final var arena = Arena.ofConfined()) {
+            final var seg = arena.allocate(data.length);
             MemorySegment.copy(MemorySegment.ofArray(data), 0L, seg, 0L, data.length);
             switch (fmt) {
                 case JPEG -> NativeWebpLibrary.streamAddJpeg(h, seg, durationMs);
@@ -116,12 +116,12 @@ public final class WebpAnimationStream implements AutoCloseable {
      * / {@link #addPng} / {@link #finish} calls will throw.
      */
     public byte[] finish(final WebpMetadata metadata) {
-        final long h = state.handle.getAndSet(0L);
+        final var h = state.handle.getAndSet(0L);
         if (h == 0L) {
             throw new IllegalStateException("WebpAnimationStream is already closed");
         }
         // streamFinish always destroys the handle (success or failure).
-        try (final EncodedWebp out = NativeWebpLibrary.streamFinish(h, metadata)) {
+        try (final var out = NativeWebpLibrary.streamFinish(h, metadata)) {
             return out.toByteArray();
         }
     }
@@ -147,7 +147,7 @@ public final class WebpAnimationStream implements AutoCloseable {
 
         @Override
         public void run() {
-            final long h = handle.getAndSet(0L);
+            final var h = handle.getAndSet(0L);
             if (h != 0L) {
                 NativeWebpLibrary.streamAbort(h);
             }

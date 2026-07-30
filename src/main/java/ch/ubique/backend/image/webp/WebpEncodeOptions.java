@@ -263,7 +263,7 @@ public final class WebpEncodeOptions {
         }
 
         public WebpEncodeOptions build() {
-            final WebpEncodeOptions options = new WebpEncodeOptions(this);
+            final var options = new WebpEncodeOptions(this);
             options.validateAnimation();
             return options;
         }

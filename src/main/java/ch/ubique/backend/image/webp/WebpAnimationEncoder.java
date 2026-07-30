@@ -2,11 +2,12 @@ package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.ffi.NativeWebpLibrary;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.List;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Encoder for multi-frame (animated) WebP output.

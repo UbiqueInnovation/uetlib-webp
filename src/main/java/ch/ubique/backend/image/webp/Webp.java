@@ -2,8 +2,9 @@ package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.awt.WebpBufferedImageEncoder;
 
-import java.awt.image.BufferedImage;
 import org.jspecify.annotations.Nullable;
+
+import java.awt.image.BufferedImage;
 
 /**
  * High-level convenience facade for common still-image conversions.

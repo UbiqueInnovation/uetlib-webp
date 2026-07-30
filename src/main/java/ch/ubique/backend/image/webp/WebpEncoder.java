@@ -2,9 +2,10 @@ package ch.ubique.backend.image.webp;
 
 import ch.ubique.backend.image.webp.ffi.NativeWebpLibrary;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Encoder for single-image (still) WebP output.
@@ -27,7 +28,7 @@ public final class WebpEncoder {
         if (source == null || source.length == 0) {
             throw new IllegalArgumentException("input bytes must be non-null and non-empty");
         }
-        final MemorySegment target = arena.allocate(source.length);
+        final var target = arena.allocate(source.length);
         MemorySegment.copy(MemorySegment.ofArray(source), 0, target, 0, source.length);
         return target;
     }
@@ -69,8 +70,10 @@ public final class WebpEncoder {
      * {@link Arena} for the duration of the encode.
      */
     public EncodedWebp encodeStillJpeg(
-            final byte[] jpegBytes, final WebpEncodeOptions options, final @Nullable WebpMetadata metadata) {
-        try (final Arena arena = Arena.ofConfined()) {
+            final byte[] jpegBytes,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
+        try (final var arena = Arena.ofConfined()) {
             return encodeStillJpeg(copyToArena(arena, jpegBytes), options, metadata);
         }
     }
@@ -80,8 +83,10 @@ public final class WebpEncoder {
      * buffer is freed before this method returns.
      */
     public byte[] encodeStillJpegToBytes(
-            final byte[] jpegBytes, final WebpEncodeOptions options, final @Nullable WebpMetadata metadata) {
-        try (final EncodedWebp out = encodeStillJpeg(jpegBytes, options, metadata)) {
+            final byte[] jpegBytes,
+            final WebpEncodeOptions options,
+            final @Nullable WebpMetadata metadata) {
+        try (final var out = encodeStillJpeg(jpegBytes, options, metadata)) {
             return out.toByteArray();
         }
     }
@@ -99,7 +104,7 @@ public final class WebpEncoder {
     /** Convenience overload for callers holding a {@code byte[]}. */
     public EncodedWebp encodeStillPng(
             final byte[] pngBytes, final WebpEncodeOptions options, final WebpMetadata metadata) {
-        try (final Arena arena = Arena.ofConfined()) {
+        try (final var arena = Arena.ofConfined()) {
             return encodeStillPng(copyToArena(arena, pngBytes), options, metadata);
         }
     }
@@ -110,7 +115,7 @@ public final class WebpEncoder {
      */
     public byte[] encodeStillPngToBytes(
             final byte[] pngBytes, final WebpEncodeOptions options, final WebpMetadata metadata) {
-        try (final EncodedWebp out = encodeStillPng(pngBytes, options, metadata)) {
+        try (final var out = encodeStillPng(pngBytes, options, metadata)) {
             return out.toByteArray();
         }
     }

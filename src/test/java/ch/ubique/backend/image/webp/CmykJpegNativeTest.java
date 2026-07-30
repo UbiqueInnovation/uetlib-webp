@@ -1,11 +1,11 @@
 package ch.ubique.backend.image.webp;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Regression test for CMYK / YCCK JPEGs (4-component, Adobe APP14).
@@ -37,9 +37,9 @@ class CmykJpegNativeTest {
 
     private static void assertWebpContainer(byte[] bytes) {
         assertTrue(bytes.length >= 12);
-        assertArrayEquals(new byte[]{'R', 'I', 'F', 'F'},
-            java.util.Arrays.copyOfRange(bytes, 0, 4));
-        assertArrayEquals(new byte[]{'W', 'E', 'B', 'P'},
-            java.util.Arrays.copyOfRange(bytes, 8, 12));
+        assertArrayEquals(
+                new byte[] {'R', 'I', 'F', 'F'}, java.util.Arrays.copyOfRange(bytes, 0, 4));
+        assertArrayEquals(
+                new byte[] {'W', 'E', 'B', 'P'}, java.util.Arrays.copyOfRange(bytes, 8, 12));
     }
 }
