@@ -21,6 +21,8 @@ import ch.ubique.backend.image.webp.WebpFrame;
 import ch.ubique.backend.image.webp.WebpMetadata;
 import ch.ubique.backend.image.webp.WebpRawImage;
 
+import org.jspecify.annotations.Nullable;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
@@ -31,7 +33,6 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.List;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Hand-written FFM bridge to the {@code uetlib_webp_native} library.
@@ -125,17 +126,17 @@ public final class NativeWebpLibrary {
             final WebpEncodeOptions options,
             final WebpMetadata metadata) {
         try {
-            final Arena scope = Arena.ofShared();
-            final MemorySegment raw = scope.allocate(RAW_IMAGE);
-            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            final MemorySegment meta = scope.allocate(METADATA);
-            final MemorySegment result = scope.allocate(RESULT);
+            final var scope = Arena.ofShared();
+            final var raw = scope.allocate(RAW_IMAGE);
+            final var opts = scope.allocate(ENCODE_OPTIONS);
+            final var meta = scope.allocate(METADATA);
+            final var result = scope.allocate(RESULT);
 
             RawImage.fill(raw, image);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            final int status = (int) ENCODE_STILL_RAW.invoke(raw, opts, meta, result);
+            final var status = (int) ENCODE_STILL_RAW.invoke(raw, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
@@ -167,14 +168,14 @@ public final class NativeWebpLibrary {
             throw new WebpException("compressed bytes must be non-null and non-empty");
         }
         try {
-            final Arena scope = Arena.ofShared();
-            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            final MemorySegment meta = scope.allocate(METADATA);
-            final MemorySegment result = scope.allocate(RESULT);
+            final var scope = Arena.ofShared();
+            final var opts = scope.allocate(ENCODE_OPTIONS);
+            final var meta = scope.allocate(METADATA);
+            final var result = scope.allocate(RESULT);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            final int status =
+            final var status =
                     (int)
                             handle.invoke(
                                     compressedBytes,
@@ -242,22 +243,22 @@ public final class NativeWebpLibrary {
             final WebpEncodeOptions options,
             final WebpMetadata metadata) {
         try {
-            final Arena scope = Arena.ofShared();
-            final MemorySegment frameArray = scope.allocate(ANIM_FRAME, frames.size());
-            for (int i = 0; i < frames.size(); i++) {
+            final var scope = Arena.ofShared();
+            final var frameArray = scope.allocate(ANIM_FRAME, frames.size());
+            for (var i = 0; i < frames.size(); i++) {
                 AnimFrame.fill(
                         frameArray.asSlice(i * ANIM_FRAME.byteSize(), ANIM_FRAME.byteSize()),
                         frames.get(i));
             }
-            final MemorySegment job = scope.allocate(ANIM_JOB);
-            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            final MemorySegment meta = scope.allocate(METADATA);
-            final MemorySegment result = scope.allocate(RESULT);
+            final var job = scope.allocate(ANIM_JOB);
+            final var opts = scope.allocate(ENCODE_OPTIONS);
+            final var meta = scope.allocate(METADATA);
+            final var result = scope.allocate(RESULT);
             AnimJob.fill(job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            final int status = (int) handle.invoke(job, opts, meta, result);
+            final var status = (int) handle.invoke(job, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
@@ -273,24 +274,24 @@ public final class NativeWebpLibrary {
             final WebpEncodeOptions options,
             final WebpMetadata metadata) {
         try {
-            final Arena scope = Arena.ofShared();
-            final MemorySegment frameArray = scope.allocate(COMPRESSED_FRAME, frames.size());
-            for (int i = 0; i < frames.size(); i++) {
+            final var scope = Arena.ofShared();
+            final var frameArray = scope.allocate(COMPRESSED_FRAME, frames.size());
+            for (var i = 0; i < frames.size(); i++) {
                 CompressedFrame.fill(
                         frameArray.asSlice(
                                 i * COMPRESSED_FRAME.byteSize(), COMPRESSED_FRAME.byteSize()),
                         frames.get(i));
             }
-            final MemorySegment job = scope.allocate(COMPRESSED_ANIM_JOB);
-            final MemorySegment opts = scope.allocate(ENCODE_OPTIONS);
-            final MemorySegment meta = scope.allocate(METADATA);
-            final MemorySegment result = scope.allocate(RESULT);
+            final var job = scope.allocate(COMPRESSED_ANIM_JOB);
+            final var opts = scope.allocate(ENCODE_OPTIONS);
+            final var meta = scope.allocate(METADATA);
+            final var result = scope.allocate(RESULT);
             CompressedAnimJob.fill(
                     job, frameArray, frames.size(), canvasWidth, canvasHeight, bgcolorRgba);
             EncodeOptions.fill(opts, options);
             Metadata.fill(meta, metadata, scope);
 
-            final int status = (int) handle.invoke(job, opts, meta, result);
+            final var status = (int) handle.invoke(job, opts, meta, result);
             return toEncodedOrThrow(status, result, scope);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
@@ -309,13 +310,13 @@ public final class NativeWebpLibrary {
             final int canvasHeight,
             final int bgcolorRgba,
             final WebpEncodeOptions options) {
-        try (final Arena arena = Arena.ofConfined()) {
-            final MemorySegment opts = arena.allocate(ENCODE_OPTIONS);
-            final MemorySegment outStream = arena.allocate(C_POINTER);
-            final MemorySegment outErr = arena.allocate(RESULT);
+        try (final var arena = Arena.ofConfined()) {
+            final var opts = arena.allocate(ENCODE_OPTIONS);
+            final var outStream = arena.allocate(C_POINTER);
+            final var outErr = arena.allocate(RESULT);
             EncodeOptions.fill(opts, options);
 
-            final int status =
+            final var status =
                     (int)
                             STREAM_OPEN.invoke(
                                     canvasWidth,
@@ -325,7 +326,7 @@ public final class NativeWebpLibrary {
                                     outStream,
                                     outErr);
             if (status != 0) {
-                final String err = readErrorMessage(outErr);
+                final var err = readErrorMessage(outErr);
                 freeBuffer(Result.errorMessage(outErr).address());
                 throw new WebpException(
                         "Failed to open WebP animation stream (status=" + status + "): " + err,
@@ -334,7 +335,7 @@ public final class NativeWebpLibrary {
             // success path may also have set error_message to NULL — defensively free
             freeBuffer(Result.errorMessage(outErr).address());
 
-            final MemorySegment handle = outStream.get(C_POINTER, 0L);
+            final var handle = outStream.get(C_POINTER, 0L);
             if (handle.equals(MemorySegment.NULL) || handle.address() == 0L) {
                 throw new WebpException("Native stream open returned NULL handle");
             }
@@ -375,10 +376,10 @@ public final class NativeWebpLibrary {
                 || compressedBytes.byteSize() <= 0) {
             throw new WebpException(label + " bytes must be non-null and non-empty");
         }
-        try (final Arena arena = Arena.ofConfined()) {
-            final MemorySegment outErr = arena.allocate(RESULT);
-            final MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
-            final int status =
+        try (final var arena = Arena.ofConfined()) {
+            final var outErr = arena.allocate(RESULT);
+            final var streamPtr = MemorySegment.ofAddress(handleAddress);
+            final var status =
                     (int)
                             handle.invoke(
                                     streamPtr,
@@ -387,7 +388,7 @@ public final class NativeWebpLibrary {
                                     durationMs,
                                     outErr);
             if (status != 0) {
-                final String err = readErrorMessage(outErr);
+                final var err = readErrorMessage(outErr);
                 freeBuffer(Result.errorMessage(outErr).address());
                 throw new WebpException(
                         "stream_add_"
@@ -410,18 +411,19 @@ public final class NativeWebpLibrary {
      * Finalises a native streaming encoder, returns the assembled WebP buffer as an {@link
      * EncodedWebp}. The native handle is destroyed regardless of success/failure.
      */
-    public static EncodedWebp streamFinish(final long handleAddress, final @Nullable WebpMetadata metadata) {
+    public static EncodedWebp streamFinish(
+            final long handleAddress, final @Nullable WebpMetadata metadata) {
         if (handleAddress == 0L) {
             throw new WebpException("stream handle is closed");
         }
         try {
-            final Arena scope = Arena.ofShared();
-            final MemorySegment meta = scope.allocate(METADATA);
-            final MemorySegment result = scope.allocate(RESULT);
+            final var scope = Arena.ofShared();
+            final var meta = scope.allocate(METADATA);
+            final var result = scope.allocate(RESULT);
             Metadata.fill(meta, metadata == null ? WebpMetadata.EMPTY : metadata, scope);
 
-            final MemorySegment streamPtr = MemorySegment.ofAddress(handleAddress);
-            final int status = (int) STREAM_FINISH.invoke(streamPtr, meta, result);
+            final var streamPtr = MemorySegment.ofAddress(handleAddress);
+            final var status = (int) STREAM_FINISH.invoke(streamPtr, meta, result);
             return toEncodedOrThrow(status, result, scope);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
@@ -435,13 +437,13 @@ public final class NativeWebpLibrary {
         }
         try {
             STREAM_ABORT.invoke(MemorySegment.ofAddress(handleAddress));
-        } catch (final Throwable ignored) {
+        } catch (final Throwable _) {
             // intentionally swallowed: abort is a cleanup helper.
         }
     }
 
     private static String readErrorMessage(final MemorySegment errResult) {
-        final MemorySegment errPtr = Result.errorMessage(errResult);
+        final var errPtr = Result.errorMessage(errResult);
         if (errPtr.equals(MemorySegment.NULL) || errPtr.address() == 0L) {
             return "Unknown error";
         }
@@ -475,14 +477,14 @@ public final class NativeWebpLibrary {
      */
     private static EncodedWebp toEncodedOrThrow(
             final int status, final MemorySegment result, final Arena scope) {
-        try {
-            final int resultStatus = Result.status(result);
-            final MemorySegment errPtr = Result.errorMessage(result);
-            final MemorySegment data = Result.data(result);
-            final long size = Result.size(result);
+        try (scope) {
+            final var resultStatus = Result.status(result);
+            final var errPtr = Result.errorMessage(result);
+            final var data = Result.data(result);
+            final var size = Result.size(result);
 
             if (status != 0 || resultStatus != 0) {
-                final String err =
+                final var err =
                         errPtr.equals(MemorySegment.NULL)
                                 ? "Unknown error"
                                 : errPtr.reinterpret(Long.MAX_VALUE).getString(0);
@@ -498,14 +500,12 @@ public final class NativeWebpLibrary {
                 throw new WebpException("Native result is empty", resultStatus);
             }
             return new EncodedWebp(data, size);
-        } finally {
-            scope.close();
         }
     }
 
     private static MethodHandle downcall(
             final String symbolName, final FunctionDescriptor descriptor) {
-        final MemorySegment symbol =
+        final var symbol =
                 LOOKUP.find(symbolName)
                         .orElseThrow(
                                 () -> new IllegalStateException("Missing symbol: " + symbolName));
@@ -586,9 +586,9 @@ public final class NativeWebpLibrary {
         @SuppressWarnings("NullAway")
         static void fill(
                 final MemorySegment segment, final WebpMetadata metadata, final Arena arena) {
-            final MemorySegment exif = toNative(metadata.exif(), arena);
-            final MemorySegment iccp = toNative(metadata.iccp(), arena);
-            final MemorySegment xmp = toNative(metadata.xmp(), arena);
+            final var exif = toNative(metadata.exif(), arena);
+            final var iccp = toNative(metadata.iccp(), arena);
+            final var xmp = toNative(metadata.xmp(), arena);
             EXIF.set(segment, 0L, exif);
             EXIF_SIZE.set(segment, 0L, exif.equals(MemorySegment.NULL) ? 0L : exif.byteSize());
             ICCP.set(segment, 0L, iccp);
@@ -603,14 +603,15 @@ public final class NativeWebpLibrary {
          * {@code arena} and the native-backed copy is returned. This lets {@link WebpMetadata}
          * expose heap-friendly static factories without forcing callers to manage an Arena.
          */
-        private static MemorySegment toNative(final @Nullable MemorySegment segment, final Arena arena) {
+        private static MemorySegment toNative(
+                final @Nullable MemorySegment segment, final Arena arena) {
             if (segment == null || segment.equals(MemorySegment.NULL) || segment.byteSize() == 0L) {
                 return MemorySegment.NULL;
             }
             if (segment.isNative()) {
                 return segment;
             }
-            final MemorySegment copy = arena.allocate(segment.byteSize());
+            final var copy = arena.allocate(segment.byteSize());
             MemorySegment.copy(segment, 0L, copy, 0L, segment.byteSize());
             return copy;
         }

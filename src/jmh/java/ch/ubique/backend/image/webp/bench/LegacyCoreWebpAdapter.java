@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 final class LegacyCoreWebpAdapter implements Closeable {
     private static final String CLASSPATH_PROPERTY = "uetlib.webp.legacy.classpath";
@@ -70,7 +71,7 @@ final class LegacyCoreWebpAdapter implements Closeable {
     private static URL[] urlsFromClasspath(final String classpath)
             throws java.net.MalformedURLException {
         final List<URL> urls = new ArrayList<>();
-        for (final var entry : classpath.split(java.util.regex.Pattern.quote(File.pathSeparator))) {
+        for (final var entry : classpath.split(Pattern.quote(File.pathSeparator))) {
             if (!entry.isBlank()) {
                 urls.add(Path.of(entry).toUri().toURL());
             }
