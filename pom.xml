@@ -6,7 +6,7 @@
     <parent>
         <groupId>ch.ubique</groupId>
         <artifactId>uetlib-parent</artifactId>
-        <version>2026.8.0</version>
+        <version>2026.8.2</version>
         <relativePath/>
     </parent>
 
@@ -22,13 +22,7 @@
         <explicit-null-marking-level>ERROR</explicit-null-marking-level>
         <error-prone-excluded-paths>.*/src/(test|jmh)/java/.*</error-prone-excluded-paths>
 
-        <westemeyer-version-package-name>ch.ubique.backend.image.webp.version</westemeyer-version-package-name>
-
         <jmh.version>1.37</jmh.version>
-
-        <!-- Sonar-->
-        <sonar.projectName>uetlib-webp</sonar.projectName>
-        <sonar.coverage.module>uetlib-webp</sonar.coverage.module>
     </properties>
 
     <dependencies>
