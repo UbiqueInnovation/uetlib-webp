@@ -48,12 +48,32 @@ jobs:
           cp native/build/libuetlib_webp_native.* src/main/resources/native/${{ matrix.classifier }}/
 
       - name: Prepare maven
-        uses: UbiqueInnovation/action-systems-mvn-prepare@1f1440329f80458fcbf99214a888160840196d17 # v1.1.0
+        uses: UbiqueInnovation/action-systems-mvn-prepare@bfeb86b8129a37da7d062487cc1dfb60718836cc # v2.0.0
         with:
-          mvn_repository_id: ubique-artifactory
-          mvn_repository_user: ${{ secrets.UB_ARTIFACTORY_USER }}
-          mvn_repository_password: ${{ secrets.UB_ARTIFACTORY_PASSWORD }}
-          mvn_repository_url: ${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_BACKEND }}
+          mvn_servers: >-
+            [
+              {
+                "id": "ubique-artifactory",
+                "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
+                "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
+              },
+              {
+                "id": "ubique-artifactory-virtual",
+                "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
+                "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
+              }
+            ]
+          mvn_repositories: >-
+            [
+              {
+                "id": "ubique-artifactory",
+                "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_BACKEND }}"
+              },
+              {
+                "id": "ubique-artifactory-virtual",
+                "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}"
+              }
+            ]
 
       - name: Maven Install
         id: maven_install
