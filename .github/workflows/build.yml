@@ -53,11 +53,6 @@ jobs:
           mvn_servers: >-
             [
               {
-                "id": "ubique-artifactory",
-                "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
-                "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
-              },
-              {
                 "id": "ubique-artifactory-virtual",
                 "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
                 "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
@@ -65,10 +60,6 @@ jobs:
             ]
           mvn_repositories: >-
             [
-              {
-                "id": "ubique-artifactory",
-                "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_BACKEND }}"
-              },
               {
                 "id": "ubique-artifactory-virtual",
                 "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}"
