@@ -120,7 +120,7 @@ jobs:
           parent_pom: pom.xml
 
       - name: Create GitHub ${{ contains(github.ref_name, '-') == true && 'Prerelease' || 'Release' }}
-        uses: UbiqueInnovation/action-systems-github-release@5db68dd4a817a585f4a0a9aa7a2cbb8b32cc4433 # v1.0.1
+        uses: UbiqueInnovation/action-systems-github-release@12b09f5c2d38a98ef89fcf0b41125c08ca5472d1 # v1.0.2
         with:
           ref_name: ${{ github.ref_name }}
           release_option_prerelease: ${{ contains(github.ref_name, '-') }}
