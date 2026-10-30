@@ -16,7 +16,7 @@ and
 
 ## Toolchain requirements
 
-- Java 25 (final FFM API + JPMS module `ch.ubique.backend.image.webp`)
+- Java 25 (final FFM API + JPMS module `ch.ubique.uetlib.image.webp`)
 - Maven 3.9+
 - CMake 3.20+
 - C compiler (gcc / clang)

@@ -28,11 +28,11 @@ byte[] webp = Webp.lossy(75f).encode(image);
 - Direct still WebP encode from JPEG bytes (libjpeg-turbo) and PNG bytes (libpng) — no Java decode hop
 - In-memory animated WebP encode from raw frames in one native call
 - Native compressed JPEG / PNG animation paths
-- Optional AWT/`BufferedImage` helpers exposed under `ch.ubique.backend.image.webp.awt`
+- Optional AWT/`BufferedImage` helpers exposed under `ch.ubique.uetlib.image.webp.awt`
 - High-level `Webp` facade for one-line still-image conversions
 - Lossy + lossless options exposed
 - Metadata attachment (EXIF/ICCP/XMP)
-- Java integration via the FFM API (Java 25, JPMS module `ch.ubique.backend.image.webp`)
+- Java integration via the FFM API (Java 25, JPMS module `ch.ubique.uetlib.image.webp`)
 - Cleaner-backed safety net so a forgotten `EncodedWebp.close()` still frees native memory
 - No subprocesses and no temp files in the hot path
 
@@ -40,13 +40,13 @@ For end-to-end usage examples see [`docs/USAGE.md`](docs/USAGE.md).
 
 ## Repository layout
 
-- `src/main/java/ch/ubique/backend/image/webp`: Java API
-- `src/main/java/ch/ubique/backend/image/webp/awt`: optional AWT/`BufferedImage` adapters
-- `src/main/java/ch/ubique/backend/image/webp/ffi`: FFM bridge
+- `src/main/java/ch/ubique/uetlib/image/webp`: Java API
+- `src/main/java/ch/ubique/uetlib/image/webp/awt`: optional AWT/`BufferedImage` adapters
+- `src/main/java/ch/ubique/uetlib/image/webp/ffi`: FFM bridge
 - `native/include/uetlib_webp.h`: native ABI
 - `native/src/uetlib_webp.c`: native implementation
 - `native/CMakeLists.txt`: native build
-- `src/jmh/java/ch/ubique/backend/image/webp/bench`: benchmarks
+- `src/jmh/java/ch/ubique/uetlib/image/webp/bench`: benchmarks
 - `docs/`: architecture/plan/bench/build docs
 
 ## Build native library
@@ -116,7 +116,7 @@ self-contained for the architectures listed above.
 ## Fast path example
 
 ```java
-import ch.ubique.backend.image.webp.*;
+import ch.ubique.uetlib.image.webp.*;
 import java.lang.foreign.*;
 
 try (Arena arena = Arena.ofConfined()) {
@@ -148,7 +148,7 @@ try (EncodedWebp out = encoder.encodeStillJpeg(jpegBytes, opts, WebpMetadata.EMP
 High-level facade:
 
 ```java
-import ch.ubique.backend.image.webp.Webp;
+import ch.ubique.uetlib.image.webp.Webp;
 
 byte[] lossless = Webp.lossless().encodePng(pngBytes);
 byte[] lossy = Webp.lossy(80f).encodeJpeg(jpegBytes);
@@ -157,12 +157,12 @@ byte[] lossy = Webp.lossy(80f).encodeJpeg(jpegBytes);
 `BufferedImage` convenience lives in the AWT package:
 
 ```java
-import ch.ubique.backend.image.webp.awt.WebpBufferedImageEncoder;
+import ch.ubique.uetlib.image.webp.awt.WebpBufferedImageEncoder;
 
 byte[] webp = new WebpBufferedImageEncoder().encode(image, opts, WebpMetadata.EMPTY);
 ```
 
-Run on Java 25 with `--enable-native-access=ch.ubique.backend.image.webp`
+Run on Java 25 with `--enable-native-access=ch.ubique.uetlib.image.webp`
 (or `ALL-UNNAMED` for unnamed-module / classpath consumers).
 
 ## Benchmarks
@@ -183,7 +183,7 @@ List available benchmarks:
 Run a short smoke benchmark:
 
 ```bash
-./scripts/run-benchmarks.sh ch.ubique.backend.image.webp.bench.WebpEncodeBenchmark.nativeStillRawRgba -wi 0 -i 1 -f 1 -r 1s -w 1s
+./scripts/run-benchmarks.sh ch.ubique.uetlib.image.webp.bench.WebpEncodeBenchmark.nativeStillRawRgba -wi 0 -i 1 -f 1 -r 1s -w 1s
 ```
 
 Compare this library against the old `uetlib-core` WebP implementation:
@@ -194,7 +194,7 @@ LEGACY_CP="$(./scripts/legacy-core-classpath.sh)" \
   ./scripts/run-benchmarks.sh '.*(oldCore|newLibrary).*' -wi 2 -i 5 -f 3
 ```
 
-The old implementation is loaded through an isolated child-first classloader because both libraries intentionally expose the same `ch.ubique.backend.image.webp` package names.
+The old implementation is loaded through an isolated child-first classloader because both libraries intentionally expose the same `ch.ubique.uetlib.image.webp` package names.
 You can also provide the legacy classpath manually through `LEGACY_CP`, `UETLIB_CORE_CLASSPATH`, or `-Duetlib.webp.legacy.classpath=...`.
 
 Pass extra JVM flags through `JMH_JAVA_OPTS` when needed:
@@ -233,3 +233,7 @@ Attribution and license details are documented in `src/test/resources/images/ATT
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md)
+
+## License
+
+Except where otherwise noted, original uetlib code is licensed under the [Apache License 2.0](LICENSE). Third-party files retain their original license terms; see [NOTICE](NOTICE) and any third-party notices in this repository.
