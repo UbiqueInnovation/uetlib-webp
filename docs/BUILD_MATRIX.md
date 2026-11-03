@@ -8,15 +8,16 @@
 | macOS   | x86_64  | —               | Unsupported | Intel Macs not shipped               |
 | Windows | any     | —               | Unsupported | `NativeLibraryLoader` rejects it     |
 
-CI builds the native library on every matrix entry and stages it under
-`src/main/resources/native/<classifier>/` so the published JAR is multi-arch
+CI builds the native library on every matrix entry and uploads it as the
+`native-<classifier>` artifact. The shared uetlib build and publish workflows
+require all three artifacts and stage them under
+`src/main/resources/native/<classifier>/`, so the published JAR is multi-arch
 in one go. See [`.github/workflows/build.yml`](../.github/workflows/build.yml)
-and
-[`.github/workflows/build_on_tag_and_deploy_artifactory.yml`](../.github/workflows/build_on_tag_and_deploy_artifactory.yml).
+and [`.github/workflows/publish.yml`](../.github/workflows/publish.yml).
 
 ## Toolchain requirements
 
-- Java 25 (final FFM API + JPMS module `ch.ubique.uetlib.image.webp`)
+- Java 25 (final FFM API + JPMS module `ch.ubique.uetlib.webp`)
 - Maven 3.9+
 - CMake 3.20+
 - C compiler (gcc / clang)

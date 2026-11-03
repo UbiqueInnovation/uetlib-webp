@@ -2,6 +2,8 @@
 
 ## 1.0.0 (unreleased)
 
+- Rename standalone WebP Java packages to `ch.ubique.uetlib.webp`.
+
 ### Breaking changes
 
 - Move Java packages from `ch.ubique.backend` to `ch.ubique.uetlib`, including class-name resources. Existing Spring configuration property keys are unchanged.
