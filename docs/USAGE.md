@@ -1,13 +1,13 @@
 # Using `uetlib-webp`
 
 This document walks through the supported entry points end to end. All encoders
-return an [`EncodedWebp`](../src/main/java/ch/ubique/uetlib/image/webp/EncodedWebp.java),
+return an [`EncodedWebp`](../src/main/java/ch/ubique/uetlib/webp/EncodedWebp.java),
 which owns one malloc-backed native buffer.
 
 ## 1. Prerequisites
 
 - Java 25 (the library targets `--release 25` and ships as JPMS module
-  `ch.ubique.uetlib.image.webp`).
+  `ch.ubique.uetlib.webp`).
 - The native shared library `uetlib_webp_native`. The loader resolves it in this
   order:
   1. `-Duetlib.webp.native.path=/abs/path/to/libuetlib_webp_native.{so,dylib}`
@@ -20,7 +20,7 @@ which owns one malloc-backed native buffer.
 Run Java consumers with native access enabled:
 
 ```
---enable-native-access=ch.ubique.uetlib.image.webp
+--enable-native-access=ch.ubique.uetlib.webp
 ```
 
 For classpath (unnamed module) consumers use `ALL-UNNAMED` instead.
@@ -80,7 +80,7 @@ threadLevel=1, alphaQuality=100, loopCount=0`.
 ## 5. Still encode — raw pixels
 
 ```java
-import ch.ubique.uetlib.image.webp.*;
+import ch.ubique.uetlib.webp.*;
 import java.lang.foreign.*;
 
 try (Arena arena = Arena.ofConfined()) {
@@ -121,11 +121,11 @@ copy into a confined arena for the duration of the call; use the
 
 ## 7. Still encode — `BufferedImage`
 
-AWT-facing helpers live in `ch.ubique.uetlib.image.webp.awt`, keeping the core
+AWT-facing helpers live in `ch.ubique.uetlib.webp.awt`, keeping the core
 raw/compressed API separate from `BufferedImage` conversion:
 
 ```java
-import ch.ubique.uetlib.image.webp.awt.WebpBufferedImageEncoder;
+import ch.ubique.uetlib.webp.awt.WebpBufferedImageEncoder;
 
 byte[] webp = new WebpBufferedImageEncoder()
     .encode(bufferedImage, opts, WebpMetadata.EMPTY);
@@ -182,7 +182,7 @@ try (EncodedWebp out = new WebpAnimationEncoder().encodeJpegFrames(
 ## 10. Animation encode — `BufferedImage` frames
 
 ```java
-import ch.ubique.uetlib.image.webp.awt.WebpBufferedImageAnimationEncoder;
+import ch.ubique.uetlib.webp.awt.WebpBufferedImageAnimationEncoder;
 
 byte[] webp = new WebpBufferedImageAnimationEncoder().encodeFrames(
     frames, durationsMs, width, height, 0, opts, WebpMetadata.EMPTY);
@@ -270,7 +270,7 @@ call sites onto the new API as follows:
 Notes on behavior changes worth knowing during migration:
 
 - `BufferedImage` call sites can either convert to raw RGBA themselves or use
-  the AWT helpers in `ch.ubique.uetlib.image.webp.awt`.
+  the AWT helpers in `ch.ubique.uetlib.webp.awt`.
 - For JPEG/PNG inputs, prefer `encodeJpegFrames` / `encodePngFrames` —
   they decode natively (libjpeg-turbo / libpng) and skip the Java decode step.
 - `EncodedWebp` is `AutoCloseable` and owns native memory until `close()`. Use
