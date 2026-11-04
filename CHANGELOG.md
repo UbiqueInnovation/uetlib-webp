@@ -10,7 +10,7 @@
 - Remove the inherited Ubique Artifactory repository and deployment destination; private consumers must configure their own registry.
 - Add Apache-2.0 licensing for original code, preserve third-party licenses, and add public project metadata and contribution/security guidance.
 
-- Move Maven coordinates from `ch.ubique:uetlib-*` to `ch.ubique.uetlib:uetlib-*`.
+- Move Maven coordinates from `ch.ubique:uetlib-*` to `ch.uetlib:uetlib-*`.
 - Align uetlib parent, BOM and library references with the migration releases.
 
 ### Migration
@@ -19,7 +19,7 @@ After the migration releases and `uetlib-rewrite:0.1.0` are published, run this 
 
 ```sh
 mvn org.openrewrite.maven:rewrite-maven-plugin:6.46.1:run \
-  -Drewrite.recipeArtifactCoordinates=ch.ubique.uetlib:uetlib-rewrite:0.1.0 \
+  -Drewrite.recipeArtifactCoordinates=ch.uetlib:uetlib-rewrite:0.1.0 \
   -Drewrite.activeRecipes=ch.ubique.uetlib.MigrateToPublicUetlib
 ```
 
