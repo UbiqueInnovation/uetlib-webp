@@ -17,7 +17,7 @@ and [`.github/workflows/publish.yml`](../.github/workflows/publish.yml).
 
 ## Toolchain requirements
 
-- Java 25 (final FFM API + JPMS module `ch.ubique.uetlib.webp`)
+- Java 25 (final FFM API + JPMS module `ch.uetlib.webp`)
 - Maven 3.9+
 - CMake 3.20+
 - C compiler (gcc / clang)
