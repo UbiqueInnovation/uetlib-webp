@@ -2,11 +2,13 @@
 
 ## 1.0.0 (unreleased)
 
-- Rename standalone WebP Java packages to `ch.ubique.uetlib.webp`.
+- Move Java packages and class references from `ch.ubique.uetlib` to `ch.uetlib`.
+
+- Rename standalone WebP Java packages to `ch.uetlib.webp`.
 
 ### Breaking changes
 
-- Move Java packages from `ch.ubique.backend` to `ch.ubique.uetlib`, including class-name resources. Existing Spring configuration property keys are unchanged.
+- Move Java packages from `ch.ubique.backend` to `ch.uetlib`, including class-name resources. Existing Spring configuration property keys are unchanged.
 - Remove the inherited Ubique Artifactory repository and deployment destination; private consumers must configure their own registry.
 - Add Apache-2.0 licensing for original code, preserve third-party licenses, and add public project metadata and contribution/security guidance.
 
@@ -15,12 +17,12 @@
 
 ### Migration
 
-After the migration releases and `uetlib-rewrite:0.1.0` are published, run this from the consuming project, then review the diff and run its tests:
+After the migration releases and `uetlib-rewrite` are published, run this from the consuming project, then review the diff and run its tests:
 
 ```sh
-mvn org.openrewrite.maven:rewrite-maven-plugin:6.46.1:run \
-  -Drewrite.recipeArtifactCoordinates=ch.uetlib:uetlib-rewrite:0.1.0 \
-  -Drewrite.activeRecipes=ch.ubique.uetlib.MigrateToPublicUetlib
+mvn -U org.openrewrite.maven:rewrite-maven-plugin:6.46.1:run \
+  -Drewrite.recipeArtifactCoordinates=ch.uetlib:uetlib-rewrite:RELEASE \
+  -Drewrite.activeRecipes=ch.uetlib.MigrateToPublicUetlib
 ```
 
 The recipe updates Maven coordinates/versions, Java references and known class-name resources. Review application-owned packages under the old namespace, Kotlin, reflection patterns, native-access module flags and persisted class names separately. Use `:dryRun` instead of `:run` to preview a patch.
