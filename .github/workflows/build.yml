@@ -70,7 +70,7 @@ jobs:
     needs: native
     permissions:
       contents: read
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@4ec4716424bf5b8252ea5480f680440c91233cc6 # v0.1.0
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@b6d1caec0d9606f0ebe21ae5bf180451880d36c8 # v0.2.1
     with:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
@@ -78,4 +78,10 @@ jobs:
       system-packages: libwebp7 libwebpmux3 libturbojpeg libjpeg-turbo8 libpng16-16 webp
     secrets:
       SONAR_TOKEN: ${{ secrets.UBIQUE_SONAR_TOKEN }}
+      UB_ARTIFACTORY_USER: ${{ secrets.UB_ARTIFACTORY_USER }}
+      UB_ARTIFACTORY_PASSWORD: ${{ secrets.UB_ARTIFACTORY_PASSWORD }}
+      UB_ARTIFACTORY_URL: ${{ secrets.UB_ARTIFACTORY_URL }}
+      UB_ARTIFACTORY_REPO_UBIQUE: ${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}
+      SYSTEMS_UBIQUE_SIGNING_KEY_ARMOR_ASC: ${{ secrets.SYSTEMS_UBIQUE_SIGNING_KEY_ARMOR_ASC }}
+      SYSTEMS_UBIQUE_SIGNING_KEY_PASSPHRASE: ${{ secrets.SYSTEMS_UBIQUE_SIGNING_KEY_PASSPHRASE }}
 
