@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.0.0
 
 - Move Java packages and class references from `ch.ubique.uetlib` to `ch.uetlib`.
 
