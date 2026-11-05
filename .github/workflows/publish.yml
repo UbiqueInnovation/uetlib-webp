@@ -58,7 +58,7 @@ jobs:
     needs: native
     permissions:
       contents: write
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-publish.yml@b6d1caec0d9606f0ebe21ae5bf180451880d36c8 # v0.2.1
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-publish.yml@5418de9dbdb6b0297b43358825da0f3911d7b50c # v0.2.3
     with:
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
       # Runtime libraries for the Linux x86_64 native tests run by Maven.
