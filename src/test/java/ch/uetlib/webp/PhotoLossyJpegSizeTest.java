@@ -25,9 +25,9 @@ class PhotoLossyJpegSizeTest {
 
     static Stream<String> photos() {
         return Stream.of(
-                "/images/rapeseed_field.jpg",
-                "/images/alpine_brook.jpg",
-                "/images/alpine_lake.jpg");
+                "/images/fronalpstock_featured.jpg",
+                "/images/yosemite_tunnel_view_diliff.jpg",
+                "/images/milford_sound_nz.jpg");
     }
 
     private static byte[] readResource(final String resource) throws Exception {
