@@ -70,7 +70,7 @@ jobs:
     needs: native
     permissions:
       contents: read
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@47e8bf2c7dec9c809e7d76542b7d953350badd36 # v0.2.3
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@3e7c72c06d5cb24c1deaabe3d0a8fd5c72e0bd83 # v0.2.4
     with:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
