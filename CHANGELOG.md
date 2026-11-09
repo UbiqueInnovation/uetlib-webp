@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1
+## 1.0.2
 
 - Replace personal photo fixtures with the existing attributed test images.
 - Update third-party notices and test-data attribution.

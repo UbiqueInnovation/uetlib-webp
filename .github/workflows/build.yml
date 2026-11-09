@@ -39,6 +39,29 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
+          overwrite-settings: false
+
+      # s4u skips empty settings inputs.
+      - name: Create settings.xml
+        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+        uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb # v4.1.0
+        with:
+          githubServer: false
+          servers: >-
+            [
+              {
+                "id": "ubique-artifactory-virtual",
+                "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
+                "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
+              }
+            ]
+          repositories: >-
+            [
+              {
+                "id": "ubique-artifactory-virtual",
+                "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}"
+              }
+            ]
 
       - name: Install native build dependencies
         run: ${{ matrix.install }}
