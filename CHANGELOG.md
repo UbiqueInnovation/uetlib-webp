@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Replace personal photo fixtures with the existing attributed test images.
+- Update third-party notices and test-data attribution.
+- Update shared Maven build and publish workflows to v0.2.4.
+
 ## 1.0.0
 
 - Move Java packages and class references from `ch.ubique.uetlib` to `ch.uetlib`.
