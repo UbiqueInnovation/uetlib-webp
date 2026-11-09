@@ -5,8 +5,8 @@ on:
     tags-ignore: [ v* ]
 
 jobs:
-  build:
-    name: Build (${{ matrix.classifier }})
+  native:
+    name: Native (${{ matrix.classifier }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,6 +33,36 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          overwrite-settings: false
+
+      # s4u skips empty settings inputs.
+      - name: Create settings.xml
+        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+        uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb # v4.1.0
+        with:
+          githubServer: false
+          servers: >-
+            [
+              {
+                "id": "ubique-artifactory-virtual",
+                "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
+                "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
+              }
+            ]
+          repositories: >-
+            [
+              {
+                "id": "ubique-artifactory-virtual",
+                "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}"
+              }
+            ]
+
       - name: Install native build dependencies
         run: ${{ matrix.install }}
 
@@ -42,49 +72,39 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release -j
 
-      - name: Stage native library as classpath resource
+      - name: Verify on this platform
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Stage native library
         run: |
-          mkdir -p src/main/resources/native/${{ matrix.classifier }}
-          cp native/build/libuetlib_webp_native.* src/main/resources/native/${{ matrix.classifier }}/
+          mkdir -p native-stage/${{ matrix.classifier }}
+          cp native/build/libuetlib_webp_native.* native-stage/${{ matrix.classifier }}/
 
-      - name: Prepare maven
-        uses: UbiqueInnovation/action-systems-mvn-prepare@bfeb86b8129a37da7d062487cc1dfb60718836cc # v2.0.0
-        with:
-          mvn_servers: >-
-            [
-              {
-                "id": "ubique-artifactory-virtual",
-                "username": "${{ secrets.UB_ARTIFACTORY_USER }}",
-                "password": "${{ secrets.UB_ARTIFACTORY_PASSWORD }}"
-              }
-            ]
-          mvn_repositories: >-
-            [
-              {
-                "id": "ubique-artifactory-virtual",
-                "url": "${{ secrets.UB_ARTIFACTORY_URL }}${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}"
-              }
-            ]
-
-      - name: Maven Install
-        id: maven_install
-        uses: UbiqueInnovation/action-systems-mvn-install@1e861d926529f75b9a2e02162965f813b944ee0f # v1.3.0
-        with:
-          parent_pom: pom.xml
-
-      - name: Maven Verify Sonar
-        uses: UbiqueInnovation/action-systems-mvn-verify-sonar@d7b1e7a7794f1e3ca136e7f0b25640b16047d4ca # v2.0.0
-        with:
-          ref_name: ${{ github.ref_name }}
-          parent_pom: pom.xml
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          sonar_token: ${{ secrets.UBIQUE_SONAR_TOKEN }}
-          tests_ran: ${{ steps.maven_install.outputs.tests_ran }}
-
-
+      # The artifact contains <classifier>/libuetlib_webp_native.*, the packaged resource layout.
       - name: Upload native artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-${{ matrix.classifier }}
-          path: src/main/resources/native/${{ matrix.classifier }}/
+          path: native-stage/
           if-no-files-found: error
+
+  build:
+    name: Build Project
+    needs: native
+    permissions:
+      contents: read
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@23b270cee4169cadc716937c31d7a14d3e69a301 # v0.2.4
+    with:
+      sonar: true
+      native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
+      # Runtime libraries for the Linux x86_64 native tests run by Maven.
+      system-packages: libwebp7 libwebpmux3 libturbojpeg0 libjpeg-turbo8 libpng16-16 webp
+    secrets:
+      SONAR_TOKEN: ${{ secrets.UBIQUE_SONAR_TOKEN }}
+      UB_ARTIFACTORY_USER: ${{ secrets.UB_ARTIFACTORY_USER }}
+      UB_ARTIFACTORY_PASSWORD: ${{ secrets.UB_ARTIFACTORY_PASSWORD }}
+      UB_ARTIFACTORY_URL: ${{ secrets.UB_ARTIFACTORY_URL }}
+      UB_ARTIFACTORY_REPO_UBIQUE: ${{ secrets.UB_ARTIFACTORY_REPO_UBIQUE }}
+      SYSTEMS_UBIQUE_SIGNING_KEY_ARMOR_ASC: ${{ secrets.SYSTEMS_UBIQUE_SIGNING_KEY_ARMOR_ASC }}
+      SYSTEMS_UBIQUE_SIGNING_KEY_PASSPHRASE: ${{ secrets.SYSTEMS_UBIQUE_SIGNING_KEY_PASSPHRASE }}
+

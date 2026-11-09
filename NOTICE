@@ -1,0 +1,10 @@
+uetlib-webp
+Copyright 2026 Ubique Innovation AG
+
+Original uetlib code is licensed under the Apache License, Version 2.0.
+Third-party files retain their original copyrights and license terms.
+
+The native bridge dynamically links to separately installed libwebp/libwebpmux,
+libjpeg-turbo/libjpeg and libpng. Those libraries retain their upstream licenses.
+Test images retain the licenses and attribution listed in
+src/test/resources/images/ATTRIBUTION.md, reproduced in THIRD_PARTY_NOTICES.md.
