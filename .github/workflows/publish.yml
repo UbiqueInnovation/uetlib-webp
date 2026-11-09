@@ -1,0 +1,66 @@
+name: Publish
+on:
+  push:
+    tags: [ v* ]
+
+jobs:
+  native:
+    name: Native (${{ matrix.classifier }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            classifier: linux-x86_64
+            install: |
+              sudo apt-get update
+              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libjpeg-dev libpng-dev webp
+          - os: ubuntu-24.04-arm
+            classifier: linux-aarch64
+            install: |
+              sudo apt-get update
+              sudo apt-get install -y cmake pkg-config libwebp-dev libturbojpeg0-dev libjpeg-dev libpng-dev webp
+          - os: macos-latest
+            classifier: macos-aarch64
+            install: |
+              brew install cmake pkg-config webp jpeg-turbo libpng
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install native build dependencies
+        run: ${{ matrix.install }}
+
+      - name: Build native library
+        working-directory: native
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j
+
+      - name: Stage native library
+        run: |
+          mkdir -p native-stage/${{ matrix.classifier }}
+          cp native/build/libuetlib_webp_native.* native-stage/${{ matrix.classifier }}/
+
+      # The artifact contains <classifier>/libuetlib_webp_native.*, the packaged resource layout.
+      - name: Upload native artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-${{ matrix.classifier }}
+          path: native-stage/
+          if-no-files-found: error
+
+  publish:
+    needs: native
+    permissions:
+      contents: write
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-publish.yml@3e7c72c06d5cb24c1deaabe3d0a8fd5c72e0bd83 # v0.2.4
+    with:
+      native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
+      # Runtime libraries for the Linux x86_64 native tests run by Maven.
+      system-packages: libwebp7 libwebpmux3 libturbojpeg0 libjpeg-turbo8 libpng16-16 webp
+    secrets: inherit

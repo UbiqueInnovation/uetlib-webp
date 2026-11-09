@@ -4,16 +4,36 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>ch.ubique</groupId>
+        <groupId>ch.uetlib</groupId>
         <artifactId>uetlib-parent</artifactId>
-        <version>2026.10.1</version>
+        <version>2026.11.1</version>
         <relativePath/>
     </parent>
 
     <artifactId>uetlib-webp</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <name>uetlib WebP</name>
     <description>In-process high-performance WebP engine for Java using FFM + native C/libwebp</description>
+
+    <url>https://github.com/UbiqueInnovation/uetlib-webp</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <organization>
+        <name>Ubique Innovation AG</name>
+        <url>https://www.ubique.ch</url>
+    </organization>
+    <developers>
+        <developer>
+            <name>Ubique Innovation AG</name>
+            <organization>Ubique Innovation AG</organization>
+            <organizationUrl>https://www.ubique.ch</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <java.version>25</java.version>
@@ -175,25 +195,11 @@
         </pluginManagement>
     </build>
 
-    <repositories>
-        <!-- ubique artifactory are necessary for resolution of the parent. -->
-        <!-- Other repositories are resolved in the parent repositories. -->
-        <repository>
-            <id>ubique-artifactory-virtual</id>
-            <name>ubique</name>
-            <url>https://artifactory.ubique.ch/artifactory/ubique</url>
-        </repository>
-    </repositories>
 
-    <distributionManagement>
-        <repository>
-            <id>ubique-artifactory-virtual</id>
-            <name>ubique</name>
-            <url>https://artifactory.ubique.ch/artifactory/ubique</url>
-        </repository>
-    </distributionManagement>
 
-    <scm child.scm.url.inherit.append.path="false">
+    <scm child.scm.url.inherit.append.path="false" child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false">
+        <connection>scm:git:https://github.com/UbiqueInnovation/uetlib-webp.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/UbiqueInnovation/uetlib-webp.git</developerConnection>
         <url>https://github.com/UbiqueInnovation/uetlib-webp</url>
     </scm>
 </project>

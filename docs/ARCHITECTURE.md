@@ -2,10 +2,10 @@
 
 ## Repository layout
 
-- `src/main/java/ch/ubique/backend/image/webp`
+- `src/main/java/ch/uetlib/image/webp`
   - Java API surface (`WebpEncoder`, `WebpAnimationEncoder`, options/frames/metadata)
   - `EncodedWebp` lifecycle wrapper for native-owned bytes
-- `src/main/java/ch/ubique/backend/image/webp/ffi`
+- `src/main/java/ch/uetlib/webp/ffi`
   - FFM bridge (`NativeWebpLibrary`, struct layouts, downcalls)
 - `native/include/uetlib_webp.h`
   - Stable C ABI header
@@ -13,7 +13,7 @@
   - Native implementation using `libwebp` + `libwebpmux`
 - `native/CMakeLists.txt`
   - Native build configuration
-- `src/jmh/java/ch/ubique/backend/image/webp/bench`
+- `src/jmh/java/ch/uetlib/webp/bench`
   - JMH benchmark suite (fast path vs CLI+temp-file baseline)
 - `docs/*.md`
   - Plan, benchmark plan, build matrix
