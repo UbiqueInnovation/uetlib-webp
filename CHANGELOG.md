@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.0.2
+## 1.0.3
 
+- Replace turbojpeg by turbojpeg0 for Ubuntu 26
 - Replace personal photo fixtures with the existing attributed test images.
 - Update third-party notices and test-data attribution.
 - Update shared Maven build and publish workflows to v0.2.4.

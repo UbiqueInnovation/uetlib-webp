@@ -98,7 +98,7 @@ jobs:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
       # Runtime libraries for the Linux x86_64 native tests run by Maven.
-      system-packages: libwebp7 libwebpmux3 libturbojpeg libjpeg-turbo8 libpng16-16 webp
+      system-packages: libwebp7 libwebpmux3 libturbojpeg0 libjpeg-turbo8 libpng16-16 webp
     secrets:
       SONAR_TOKEN: ${{ secrets.UBIQUE_SONAR_TOKEN }}
       UB_ARTIFACTORY_USER: ${{ secrets.UB_ARTIFACTORY_USER }}
