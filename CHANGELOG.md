@@ -5,7 +5,6 @@
 - Replace turbojpeg by turbojpeg0 for Ubuntu 26
 - Replace personal photo fixtures with the existing attributed test images.
 - Update third-party notices and test-data attribution.
-- Update shared Maven build and publish workflows to v0.2.4.
 
 ## 1.0.0
 
@@ -133,9 +132,7 @@ separately. Use `:dryRun` instead of `:run` to preview a patch.
 - `module-info.java` published; `-sources.jar` and `-javadoc.jar` attached.
 - Legacy compatibility surface marked `@Deprecated(forRemoval = true)` (removed
   in 0.0.7).
-- GitHub Actions matrix builds native libraries for the three supported
-  classifiers; tag deploys fan-in into a single multi-classifier JAR pushed to
-  Artifactory.
+- Package native libraries for the three supported classifiers in a single JAR.
 
 [Unreleased]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.10...v0.1.0
