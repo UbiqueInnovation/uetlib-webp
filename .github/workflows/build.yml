@@ -93,14 +93,14 @@ jobs:
     needs: native
     permissions:
       contents: read
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@b68cc517848c43ba646b910a7e412a1c7b8752e8 # v1.0.0
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@f7294d1a69143d2dafbd830b9b1b93335d3e7e7a # v1.1.0
     with:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
       # Runtime libraries for the Linux x86_64 native tests run by Maven.
       system-packages: libwebp7 libwebpmux3 libturbojpeg0 libjpeg-turbo8 libpng16-16 webp
     secrets:
-      SONAR_TOKEN: ${{ secrets.UBIQUE_SONAR_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.UETLIB_SONAR_TOKEN }}
       UB_ARTIFACTORY_USER: ${{ secrets.UB_ARTIFACTORY_USER }}
       UB_ARTIFACTORY_PASSWORD: ${{ secrets.UB_ARTIFACTORY_PASSWORD }}
       UB_ARTIFACTORY_URL: ${{ secrets.UB_ARTIFACTORY_URL }}
