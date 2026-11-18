@@ -2,6 +2,8 @@
 
 ## 1.0.4
 
+- Build pull requests, including forks, and pushes to `main` instead of every branch push; use shared Maven
+  workflows at `v1.1.1`.
 - Use shared Maven workflows at `v1.1.0`: wait for the SonarCloud quality gate and analyse with the
   uetlib-only Sonar token.
 - Use shared Maven build and publish workflows at `v1.0.0` to enforce formatting checks in CI.
