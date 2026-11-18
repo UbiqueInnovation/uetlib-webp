@@ -1,8 +1,8 @@
 name: Build
 on:
   push:
-    branches: [ '**' ]
-    tags-ignore: [ v* ]
+    branches: [ main ]
+  pull_request:
 
 jobs:
   native:
@@ -30,16 +30,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.ref_name }}
 
       - name: Set up Java
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '25'
-          cache: maven
+          # Pull request builds resolve without Artifactory and use their own Maven cache below.
+          cache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && 'maven' || '' }}
           overwrite-settings: false
+
+      - name: Cache Maven repository for pull requests
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-pr-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-pr-${{ runner.os }}-
 
       # s4u skips empty settings inputs.
       - name: Create settings.xml
@@ -93,7 +100,7 @@ jobs:
     needs: native
     permissions:
       contents: read
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@f7294d1a69143d2dafbd830b9b1b93335d3e7e7a # v1.1.0
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@b2274a24393298710015211301cf003af6742147 # v1.1.1
     with:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
