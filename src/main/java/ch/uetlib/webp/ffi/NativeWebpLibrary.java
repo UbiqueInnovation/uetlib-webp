@@ -33,6 +33,7 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Hand-written FFM bridge to the {@code uetlib_webp_native} library.
@@ -125,8 +126,7 @@ public final class NativeWebpLibrary {
             final WebpRawImage image,
             final WebpEncodeOptions options,
             final WebpMetadata metadata) {
-        try {
-            final var scope = Arena.ofShared();
+        try (final var scope = Arena.ofShared()) {
             final var raw = scope.allocate(RAW_IMAGE);
             final var opts = scope.allocate(ENCODE_OPTIONS);
             final var meta = scope.allocate(METADATA);
@@ -137,7 +137,7 @@ public final class NativeWebpLibrary {
             Metadata.fill(meta, metadata, scope);
 
             final var status = (int) ENCODE_STILL_RAW.invoke(raw, opts, meta, result);
-            return toEncodedOrThrow(status, result, scope);
+            return toEncodedOrThrow(status, result);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
@@ -167,8 +167,7 @@ public final class NativeWebpLibrary {
                 || compressedBytes.byteSize() <= 0) {
             throw new WebpException("compressed bytes must be non-null and non-empty");
         }
-        try {
-            final var scope = Arena.ofShared();
+        try (final var scope = Arena.ofShared()) {
             final var opts = scope.allocate(ENCODE_OPTIONS);
             final var meta = scope.allocate(METADATA);
             final var result = scope.allocate(RESULT);
@@ -183,7 +182,7 @@ public final class NativeWebpLibrary {
                                     opts,
                                     meta,
                                     result);
-            return toEncodedOrThrow(status, result, scope);
+            return toEncodedOrThrow(status, result);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
@@ -242,8 +241,7 @@ public final class NativeWebpLibrary {
             final int bgcolorRgba,
             final WebpEncodeOptions options,
             final WebpMetadata metadata) {
-        try {
-            final var scope = Arena.ofShared();
+        try (final var scope = Arena.ofShared()) {
             final var frameArray = scope.allocate(ANIM_FRAME, frames.size());
             for (var i = 0; i < frames.size(); i++) {
                 AnimFrame.fill(
@@ -259,7 +257,7 @@ public final class NativeWebpLibrary {
             Metadata.fill(meta, metadata, scope);
 
             final var status = (int) handle.invoke(job, opts, meta, result);
-            return toEncodedOrThrow(status, result, scope);
+            return toEncodedOrThrow(status, result);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
@@ -273,8 +271,7 @@ public final class NativeWebpLibrary {
             final int bgcolorRgba,
             final WebpEncodeOptions options,
             final WebpMetadata metadata) {
-        try {
-            final var scope = Arena.ofShared();
+        try (final var scope = Arena.ofShared()) {
             final var frameArray = scope.allocate(COMPRESSED_FRAME, frames.size());
             for (var i = 0; i < frames.size(); i++) {
                 CompressedFrame.fill(
@@ -292,7 +289,7 @@ public final class NativeWebpLibrary {
             Metadata.fill(meta, metadata, scope);
 
             final var status = (int) handle.invoke(job, opts, meta, result);
-            return toEncodedOrThrow(status, result, scope);
+            return toEncodedOrThrow(status, result);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
@@ -392,7 +389,7 @@ public final class NativeWebpLibrary {
                 freeBuffer(Result.errorMessage(outErr).address());
                 throw new WebpException(
                         "stream_add_"
-                                + label.toLowerCase()
+                                + label.toLowerCase(Locale.ROOT)
                                 + " failed (status="
                                 + status
                                 + "): "
@@ -416,15 +413,14 @@ public final class NativeWebpLibrary {
         if (handleAddress == 0L) {
             throw new WebpException("stream handle is closed");
         }
-        try {
-            final var scope = Arena.ofShared();
+        try (final var scope = Arena.ofShared()) {
             final var meta = scope.allocate(METADATA);
             final var result = scope.allocate(RESULT);
             Metadata.fill(meta, metadata == null ? WebpMetadata.EMPTY : metadata, scope);
 
             final var streamPtr = MemorySegment.ofAddress(handleAddress);
             final var status = (int) STREAM_FINISH.invoke(streamPtr, meta, result);
-            return toEncodedOrThrow(status, result, scope);
+            return toEncodedOrThrow(status, result);
         } catch (final Throwable t) {
             throw wrapNativeFailure(t);
         }
@@ -472,35 +468,32 @@ public final class NativeWebpLibrary {
 
     /**
      * Drains the native result struct into Java-owned values, immediately frees the struct's
-     * metadata side (error_message), and closes the staging arena. The encoded data buffer is
-     * malloc-owned and lives on inside the returned {@link EncodedWebp}.
+     * metadata side (error_message). The caller closes the staging arena. The encoded data buffer
+     * is malloc-owned and lives on inside the returned {@link EncodedWebp}.
      */
-    private static EncodedWebp toEncodedOrThrow(
-            final int status, final MemorySegment result, final Arena scope) {
-        try (scope) {
-            final var resultStatus = Result.status(result);
-            final var errPtr = Result.errorMessage(result);
-            final var data = Result.data(result);
-            final var size = Result.size(result);
+    private static EncodedWebp toEncodedOrThrow(final int status, final MemorySegment result) {
+        final var resultStatus = Result.status(result);
+        final var errPtr = Result.errorMessage(result);
+        final var data = Result.data(result);
+        final var size = Result.size(result);
 
-            if (status != 0 || resultStatus != 0) {
-                final var err =
-                        errPtr.equals(MemorySegment.NULL)
-                                ? "Unknown error"
-                                : errPtr.reinterpret(Long.MAX_VALUE).getString(0);
-                freeBuffer(data.address());
-                freeBuffer(errPtr.address());
-                throw new WebpException(
-                        "WebP encode failed (status=" + resultStatus + "): " + err, resultStatus);
-            }
-
+        if (status != 0 || resultStatus != 0) {
+            final var err =
+                    errPtr.equals(MemorySegment.NULL)
+                            ? "Unknown error"
+                            : errPtr.reinterpret(Long.MAX_VALUE).getString(0);
+            freeBuffer(data.address());
             freeBuffer(errPtr.address());
-
-            if (data.equals(MemorySegment.NULL) || size <= 0) {
-                throw new WebpException("Native result is empty", resultStatus);
-            }
-            return new EncodedWebp(data, size);
+            throw new WebpException(
+                    "WebP encode failed (status=" + resultStatus + "): " + err, resultStatus);
         }
+
+        freeBuffer(errPtr.address());
+
+        if (data.equals(MemorySegment.NULL) || size <= 0) {
+            throw new WebpException("Native result is empty", resultStatus);
+        }
+        return new EncodedWebp(data, size);
     }
 
     private static MethodHandle downcall(
@@ -512,12 +505,11 @@ public final class NativeWebpLibrary {
         return LINKER.downcallHandle(symbol, descriptor);
     }
 
-    /* -----------------------------------------------------------------------
-     * Struct accessor classes — jextract-style. Each class corresponds to one
-     * C struct: VarHandles derived from the layout, plus a small typed
-     * {@code fill()} that mirrors the FFM/jextract pattern of "set every
-     * field on a fresh allocation".
-     * ----------------------------------------------------------------------- */
+    // -----------------------------------------------------------------------
+    // Struct accessor classes, jextract-style. Each class corresponds to one C struct: VarHandles
+    // derived from the layout, plus a small typed fill() that mirrors the FFM/jextract pattern of
+    // "set every field on a fresh allocation".
+    // -----------------------------------------------------------------------
 
     private static VarHandle vh(final MemoryLayout layout, final String field) {
         // Outer empty PathElement strips the synthetic leading offset element so the
