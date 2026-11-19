@@ -54,7 +54,7 @@ public record WebpCompressedFrameBytes(byte[] data, int durationMs) {
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-                .append("data.length", data.length)
+                .append("data", data, false)
                 .append("durationMs", durationMs)
                 .toString();
     }
