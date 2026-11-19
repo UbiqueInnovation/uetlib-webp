@@ -1,8 +1,10 @@
 package ch.uetlib.webp;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jspecify.annotations.Nullable;
-
-import java.util.Arrays;
 
 /**
  * Heap-friendly animation frame descriptor for JPEG or PNG byte frames.
@@ -30,22 +32,30 @@ public record WebpCompressedFrameBytes(byte[] data, int durationMs) {
 
     @Override
     public boolean equals(final @Nullable Object o) {
-        return o instanceof final WebpCompressedFrameBytes that
-                && durationMs == that.durationMs
-                && Arrays.equals(data, that.data);
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof final WebpCompressedFrameBytes that)) {
+            return false;
+        }
+
+        return new EqualsBuilder()
+                .append(data, that.data)
+                .append(durationMs, that.durationMs)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return 31 * Arrays.hashCode(data) + durationMs;
+        return new HashCodeBuilder(17, 37).append(data).append(durationMs).toHashCode();
     }
 
     @Override
     public String toString() {
-        return "WebpCompressedFrameBytes[data.length="
-                + data.length
-                + ", durationMs="
-                + durationMs
-                + "]";
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("data.length", data.length)
+                .append("durationMs", durationMs)
+                .toString();
     }
 }

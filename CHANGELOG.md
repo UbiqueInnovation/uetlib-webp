@@ -4,7 +4,8 @@
 
 - Close the native arena when an encode call fails before its result is read. Previously the shared arena and
   its memory leaked (Error Prone `MustBeClosedChecker`).
-- `WebpCompressedFrameBytes` compares and hashes its frame bytes by content.
+- `WebpCompressedFrameBytes` compares and hashes its frame bytes by content, using `commons-lang3` builders (new
+  dependency, managed by the parent).
 - Fix the other warnings of Error Prone's default checks: `Locale.ROOT` for case conversion and Javadoc entities.
 
 ## 1.0.4
