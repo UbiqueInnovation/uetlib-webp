@@ -15,10 +15,9 @@ import java.util.Locale;
  *
  * <ol>
  *   <li>{@code -Duetlib.webp.native.path=/abs/path/to/lib} — explicit override.
- *   <li>{@code native/build/lib&lt;name&gt;.&lt;ext&gt;} — local CMake build, used in-tree.
- *   <li>Classpath resource under {@code
- *       /native/&lt;os&gt;-&lt;arch&gt;/lib&lt;name&gt;.&lt;ext&gt;} — the packaged JAR layout. The
- *       resource is streamed into a temp file and loaded.
+ *   <li>{@code native/build/lib<name>.<ext>} — local CMake build, used in-tree.
+ *   <li>Classpath resource under {@code /native/<os>-<arch>/lib<name>.<ext>} — the packaged JAR
+ *       layout. The resource is streamed into a temp file and loaded.
  *   <li>{@link System#loadLibrary(String)} — relies on {@code java.library.path} / {@code
  *       LD_LIBRARY_PATH} / {@code DYLD_LIBRARY_PATH}.
  * </ol>

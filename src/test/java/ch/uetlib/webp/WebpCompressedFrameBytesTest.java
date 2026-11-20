@@ -2,6 +2,7 @@ package ch.uetlib.webp;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -34,5 +35,26 @@ class WebpCompressedFrameBytesTest {
         final byte[] data = {1};
         assertThrows(IllegalArgumentException.class, () -> new WebpCompressedFrameBytes(data, 0));
         assertThrows(IllegalArgumentException.class, () -> new WebpCompressedFrameBytes(data, -5));
+    }
+
+    @Test
+    void equalsAndHashCodeCompareTheBytesByContent() {
+        final var frame = new WebpCompressedFrameBytes(new byte[] {1, 2, 3}, 40);
+
+        assertEquals(frame, frame);
+        assertEquals(frame, new WebpCompressedFrameBytes(new byte[] {1, 2, 3}, 40));
+        assertEquals(
+                frame.hashCode(),
+                new WebpCompressedFrameBytes(new byte[] {1, 2, 3}, 40).hashCode());
+        assertNotEquals(frame, new WebpCompressedFrameBytes(new byte[] {1, 2, 4}, 40));
+        assertNotEquals(frame, new WebpCompressedFrameBytes(new byte[] {1, 2, 3}, 80));
+        assertNotEquals(frame, "frame");
+    }
+
+    @Test
+    void toStringSummarisesTheBytes() {
+        assertEquals(
+                "WebpCompressedFrameBytes[data=<size=3>,durationMs=40]",
+                new WebpCompressedFrameBytes(new byte[] {1, 2, 3}, 40).toString());
     }
 }
