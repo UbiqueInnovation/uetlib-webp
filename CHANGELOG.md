@@ -1,7 +1,14 @@
 # Changelog
 
-## UNRELEASED
+## 1.1.0
 
+- `uetlib-parent` updated to
+  `2026.11.5`: [Changelog/2026.11.5](https://github.com/UbiqueInnovation/uetlib-parent/blob/main/CHANGELOG.md#2026115) [Diff/2026.11.1-2026.11.5](https://github.com/UbiqueInnovation/uetlib-parent/compare/v2026.11.1...v2026.11.5)
+- Updated dependencies and actions.
+
+- Exclude generated test sources, such as the JMH benchmark classes, from Error Prone.
+- Pull requests from this repository build through Artifactory, including the native build, so they can use
+  releases that are not on Central yet; use shared Maven workflows at `v1.2.0`.
 - Add `Duration` overloads for animation frame durations; deprecate the millisecond integer overloads.
 
 - Close the native arena when an encode call fails before its result is read. Previously the shared arena and
@@ -151,16 +158,3 @@ separately. Use `:dryRun` instead of `:run` to preview a patch.
 - Legacy compatibility surface marked `@Deprecated(forRemoval = true)` (removed
   in 0.0.7).
 - Package native libraries for the three supported classifiers in a single JAR.
-
-[Unreleased]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.10...v0.1.0
-[0.0.10]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.9...v0.0.10
-[0.0.9]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.8...v0.0.9
-[0.0.8]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.7...v0.0.8
-[0.0.7]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.6...v0.0.7
-[0.0.6]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.5...v0.0.6
-[0.0.5]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.4...v0.0.5
-[0.0.4]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.3...v0.0.4
-[0.0.3]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.2...v0.0.3
-[0.0.2]: https://github.com/UbiqueInnovation/uetlib-webp/compare/v0.0.1...v0.0.2
-[0.0.1]: https://github.com/UbiqueInnovation/uetlib-webp/releases/tag/v0.0.1
