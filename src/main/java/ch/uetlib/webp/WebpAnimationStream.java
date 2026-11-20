@@ -5,6 +5,7 @@ import ch.uetlib.webp.ffi.NativeWebpLibrary;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <pre>{@code
  * try (var stream = encoder.openJpegStream(w, h, 0, opts)) {
  *     for (var jpeg : sourceJpegs) {
- *         stream.addJpeg(jpeg, 200);
+ *         stream.addJpeg(jpeg, Duration.ofMillis(200));
  *     }
  *     byte[] webp = stream.finish(WebpMetadata.xmp(xmp));
  * }
@@ -66,26 +67,73 @@ public final class WebpAnimationStream implements AutoCloseable {
     /**
      * Decode a JPEG frame and append it to the animation. Throws if this stream was not opened for
      * JPEG, if the frame is empty, or if its dimensions don't match the canvas.
+     *
+     * @param duration how long the frame is shown, at least 1 ms; used with millisecond precision
      */
-    public void addJpeg(final byte[] jpegBytes, final int durationMs) {
+    public void addJpeg(final byte[] jpegBytes, final Duration duration) {
         if (format != FrameFormat.JPEG) {
             throw new WebpException("addJpeg called on " + format + " stream");
         }
-        addCompressed(jpegBytes, durationMs, FrameFormat.JPEG);
+        addCompressed(
+                jpegBytes,
+                InputValidator.requirePositiveDurationMillis(duration, "duration"),
+                FrameFormat.JPEG);
     }
 
-    public void addPng(final byte[] pngBytes, final int durationMs) {
+    /**
+     * @deprecated use {@link #addJpeg(byte[], Duration)}.
+     */
+    @Deprecated(since = "1.0.5")
+    public void addJpeg(final byte[] jpegBytes, final int durationMs) {
+        addJpeg(jpegBytes, Duration.ofMillis(durationMs));
+    }
+
+    /**
+     * Decode a PNG frame and append it to the animation. Throws if this stream was not opened for
+     * PNG, if the frame is empty, or if its dimensions don't match the canvas.
+     *
+     * @param duration how long the frame is shown, at least 1 ms; used with millisecond precision
+     */
+    public void addPng(final byte[] pngBytes, final Duration duration) {
         if (format != FrameFormat.PNG) {
             throw new WebpException("addPng called on " + format + " stream");
         }
-        addCompressed(pngBytes, durationMs, FrameFormat.PNG);
+        addCompressed(
+                pngBytes,
+                InputValidator.requirePositiveDurationMillis(duration, "duration"),
+                FrameFormat.PNG);
     }
 
-    public void addWebp(final byte[] webpBytes, final int durationMs) {
+    /**
+     * @deprecated use {@link #addPng(byte[], Duration)}.
+     */
+    @Deprecated(since = "1.0.5")
+    public void addPng(final byte[] pngBytes, final int durationMs) {
+        addPng(pngBytes, Duration.ofMillis(durationMs));
+    }
+
+    /**
+     * Append an already encoded WebP frame to the animation. Throws if this stream was not opened
+     * for WebP, if the frame is empty, or if its dimensions don't match the canvas.
+     *
+     * @param duration how long the frame is shown, at least 1 ms; used with millisecond precision
+     */
+    public void addWebp(final byte[] webpBytes, final Duration duration) {
         if (format != FrameFormat.WEBP) {
             throw new WebpException("addWebp called on " + format + " stream");
         }
-        addCompressed(webpBytes, durationMs, FrameFormat.WEBP);
+        addCompressed(
+                webpBytes,
+                InputValidator.requirePositiveDurationMillis(duration, "duration"),
+                FrameFormat.WEBP);
+    }
+
+    /**
+     * @deprecated use {@link #addWebp(byte[], Duration)}.
+     */
+    @Deprecated(since = "1.0.5")
+    public void addWebp(final byte[] webpBytes, final int durationMs) {
+        addWebp(webpBytes, Duration.ofMillis(durationMs));
     }
 
     private void addCompressed(final byte[] data, final int durationMs, final FrameFormat fmt) {

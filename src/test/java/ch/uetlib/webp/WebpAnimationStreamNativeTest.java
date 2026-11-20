@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.time.Duration;
 
 import javax.imageio.ImageIO;
 
@@ -37,9 +38,9 @@ class WebpAnimationStreamNativeTest {
         final byte[] webp;
         try (final WebpAnimationStream stream =
                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
-            stream.addJpeg(jpeg, 50);
-            stream.addJpeg(jpeg, 50);
-            stream.addJpeg(jpeg, 50);
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
             webp = stream.finish(WebpMetadata.EMPTY);
         }
         assertWebpContainer(webp);
@@ -55,8 +56,8 @@ class WebpAnimationStreamNativeTest {
         try (final WebpAnimationStream stream =
                 encoder.openPngStream(
                         dim[0], dim[1], 0, WebpEncodeOptions.builder().lossless(true).build())) {
-            stream.addPng(png1, 50);
-            stream.addPng(png2, 50);
+            stream.addPng(png1, Duration.ofMillis(50));
+            stream.addPng(png2, Duration.ofMillis(50));
             webp = stream.finish();
         }
         assertWebpContainer(webp);
@@ -71,8 +72,8 @@ class WebpAnimationStreamNativeTest {
         final byte[] streamed;
         try (final WebpAnimationStream stream =
                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
-            stream.addJpeg(jpeg, 50);
-            stream.addJpeg(jpeg, 50);
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
             streamed = stream.finish();
         }
 
@@ -189,8 +190,8 @@ class WebpAnimationStreamNativeTest {
         final WebpAnimationStream stream =
                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults());
         try {
-            stream.addJpeg(jpeg, 50);
-            stream.addJpeg(jpeg, 50);
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
             stream.finish();
             assertThrows(IllegalStateException.class, () -> stream.addJpeg(jpeg, 50));
             assertThrows(IllegalStateException.class, stream::finish);
@@ -206,7 +207,7 @@ class WebpAnimationStreamNativeTest {
         final WebpAnimationEncoder encoder = new WebpAnimationEncoder();
         try (final WebpAnimationStream stream =
                 encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults())) {
-            stream.addJpeg(jpeg, 50);
+            stream.addJpeg(jpeg, Duration.ofMillis(50));
             // intentionally drop without finish() — close() should abort the native handle
         }
     }

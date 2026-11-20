@@ -1,6 +1,7 @@
 package ch.uetlib.webp;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import ch.uetlib.webp.awt.WebpBufferedImageAnimationEncoder;
@@ -9,11 +10,32 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings({"DataFlowIssue", "resource"})
 class WebpInputValidationTest {
+    @Test
+    void durationMillisRequiresPositiveIntRange() {
+        assertEquals(
+                1, InputValidator.requirePositiveDurationMillis(Duration.ofMillis(1), "duration"));
+        assertEquals(
+                Integer.MAX_VALUE,
+                InputValidator.requirePositiveDurationMillis(
+                        Duration.ofMillis(Integer.MAX_VALUE), "duration"));
+        for (final var duration :
+                List.of(
+                        Duration.ZERO,
+                        Duration.ofNanos(999_999),
+                        Duration.ofMillis(-1),
+                        Duration.ofMillis((long) Integer.MAX_VALUE + 1))) {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> InputValidator.requirePositiveDurationMillis(duration, "duration"));
+        }
+    }
+
     @Test
     void rawImageRequiresPositiveGeometryAndNonNullPixels() {
         try (final Arena arena = Arena.ofConfined()) {

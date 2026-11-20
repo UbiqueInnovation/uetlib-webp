@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+- Add `Duration` overloads for animation frame durations; deprecate the millisecond integer overloads.
+
 - Close the native arena when an encode call fails before its result is read. Previously the shared arena and
   its memory leaked (Error Prone `MustBeClosedChecker`).
 - `WebpCompressedFrameBytes` compares and hashes its frame bytes by content, using `commons-lang3` builders (new
