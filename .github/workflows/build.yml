@@ -32,10 +32,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Java
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: '25.0.5+8.0.LTS'
           # Pull request builds resolve without Artifactory and use their own Maven cache below.
           cache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && 'maven' || '' }}
           overwrite-settings: false
@@ -100,7 +100,7 @@ jobs:
     needs: native
     permissions:
       contents: read
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@b2274a24393298710015211301cf003af6742147 # v1.1.1
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@8e735f5276f25dd3e279fff24a4ed959f4a58c69 # v1.2.0
     with:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
