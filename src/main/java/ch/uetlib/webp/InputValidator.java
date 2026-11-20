@@ -3,6 +3,7 @@ package ch.uetlib.webp;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.foreign.MemorySegment;
+import java.time.Duration;
 
 final class InputValidator {
     private InputValidator() {}
@@ -67,6 +68,19 @@ final class InputValidator {
         if (durationMs <= 0) {
             throw new IllegalArgumentException(label + " must be > 0");
         }
+    }
+
+    /**
+     * Returns {@code duration} in whole milliseconds, after checking it is positive and fits an
+     * int.
+     */
+    static int requirePositiveDurationMillis(final Duration duration, final String label) {
+        final var millis = duration.toMillis();
+        if (millis <= 0 || millis > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                    label + " must be between 1 ms and " + Integer.MAX_VALUE + " ms");
+        }
+        return (int) millis;
     }
 
     static void requirePositiveCanvas(final int canvasWidth, final int canvasHeight) {
