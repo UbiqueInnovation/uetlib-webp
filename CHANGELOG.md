@@ -7,6 +7,8 @@
 - Updated dependencies and actions.
 
 - Exclude generated test sources, such as the JMH benchmark classes, from Error Prone.
+- Pull requests from this repository build through Artifactory, including the native build, so they can use
+  releases that are not on Central yet; use shared Maven workflows at `v1.2.0`.
 - Add `Duration` overloads for animation frame durations; deprecate the millisecond integer overloads.
 
 - Close the native arena when an encode call fails before its result is read. Previously the shared arena and

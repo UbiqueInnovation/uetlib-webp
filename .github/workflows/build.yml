@@ -28,6 +28,21 @@ jobs:
               brew install cmake pkg-config webp jpeg-turbo libpng
 
     steps:
+      # Pushes and pull requests from this repository resolve through Artifactory, so they can build against
+      # releases that are not on Central yet. Fork pull requests receive no secrets and resolve from Central.
+      - name: Choose Maven repositories
+        id: repositories
+        env:
+          ARTIFACTORY_USER: ${{ secrets.UB_ARTIFACTORY_USER }}
+        run: |
+          if [[ -z "$ARTIFACTORY_USER" ]]; then
+            echo "No Artifactory credentials (e.g. a fork pull request): resolving from Maven Central"
+            echo "artifactory=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Resolving through Artifactory"
+            echo "artifactory=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -36,12 +51,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
-          # Pull request builds resolve without Artifactory and use their own Maven cache below.
-          cache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' && 'maven' || '' }}
+          # Builds without Artifactory must not restore its cache: Maven rejects cached artifacts recorded from
+          # the Artifactory repository ("present, but unavailable"), so they use their own cache below.
+          cache: ${{ steps.repositories.outputs.artifactory == 'true' && 'maven' || '' }}
           overwrite-settings: false
 
-      - name: Cache Maven repository for pull requests
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+      - name: Cache Maven repository for builds without Artifactory
+        if: ${{ steps.repositories.outputs.artifactory != 'true' }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/repository
@@ -50,7 +66,7 @@ jobs:
 
       # s4u skips empty settings inputs.
       - name: Create settings.xml
-        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+        if: ${{ steps.repositories.outputs.artifactory == 'true' }}
         uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb # v4.1.0
         with:
           githubServer: false
@@ -100,7 +116,7 @@ jobs:
     needs: native
     permissions:
       contents: read
-    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@b2274a24393298710015211301cf003af6742147 # v1.1.1
+    uses: UbiqueInnovation/uetlib/.github/workflows/mvn-install.yml@8e735f5276f25dd3e279fff24a4ed959f4a58c69 # v1.2.0
     with:
       sonar: true
       native-artifacts: native-linux-x86_64 native-linux-aarch64 native-macos-aarch64
