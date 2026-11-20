@@ -83,7 +83,7 @@ public final class WebpAnimationStream implements AutoCloseable {
     /**
      * @deprecated use {@link #addJpeg(byte[], Duration)}.
      */
-    @Deprecated(since = "1.0.5")
+    @Deprecated(since = "1.1.0")
     public void addJpeg(final byte[] jpegBytes, final int durationMs) {
         addJpeg(jpegBytes, Duration.ofMillis(durationMs));
     }
@@ -107,7 +107,7 @@ public final class WebpAnimationStream implements AutoCloseable {
     /**
      * @deprecated use {@link #addPng(byte[], Duration)}.
      */
-    @Deprecated(since = "1.0.5")
+    @Deprecated(since = "1.1.0")
     public void addPng(final byte[] pngBytes, final int durationMs) {
         addPng(pngBytes, Duration.ofMillis(durationMs));
     }
@@ -131,7 +131,7 @@ public final class WebpAnimationStream implements AutoCloseable {
     /**
      * @deprecated use {@link #addWebp(byte[], Duration)}.
      */
-    @Deprecated(since = "1.0.5")
+    @Deprecated(since = "1.1.0")
     public void addWebp(final byte[] webpBytes, final int durationMs) {
         addWebp(webpBytes, Duration.ofMillis(durationMs));
     }

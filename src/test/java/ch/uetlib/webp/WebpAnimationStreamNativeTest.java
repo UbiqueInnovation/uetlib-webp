@@ -207,13 +207,12 @@ class WebpAnimationStreamNativeTest {
         final var dim = readDimensions(jpeg);
         final var encoder = new WebpAnimationEncoder();
         final var stream = encoder.openJpegStream(dim[0], dim[1], 0, WebpEncodeOptions.defaults());
-        assertDoesNotThrow(
-                () -> {
-                    try (stream) {
-                        stream.addJpeg(jpeg, FIFTY_MILLIS);
-                        // Closing without finish() aborts the native handle.
-                    }
-                });
+        assertDoesNotThrow(() -> {
+            try (stream) {
+                stream.addJpeg(jpeg, FIFTY_MILLIS);
+                // Closing without finish() aborts the native handle.
+            }
+        });
         assertDoesNotThrow(stream::close);
         assertThrows(IllegalStateException.class, () -> stream.addJpeg(jpeg, FIFTY_MILLIS));
         assertThrows(IllegalStateException.class, stream::finish);
